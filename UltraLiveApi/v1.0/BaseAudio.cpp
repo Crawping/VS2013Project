@@ -1072,16 +1072,16 @@ void IBaseAudio::CalculateVolumeLevelsShort(char *buffer, int totalFloats, float
 	if ((UPARAM(buffer) & 0xF) == 0)
 	{
 		UINT alignedFloats = totalFloats & 0xFFFFFFF8;
-		__m128 sseValues;
+		__m128 sseValue;
 		__m128 sseSquares;
 		for (UINT i = 0; i < alignedFloats; i += 8)
 		{
 			short *tempShort = (short*)&buffer[i];
 
-			sseValues = _mm_set_ps(*tempShort / 32767.0f, *(++tempShort) / 32767.0f, *(++tempShort) / 32767.0f, *(++tempShort) / 32767.0f);
+			sseValue = _mm_set_ps(*tempShort / 32767.0f, *(++tempShort) / 32767.0f, *(++tempShort) / 32767.0f, *(++tempShort) / 32767.0f);
 
 			/*compute squares and add them to the sum*/
-			sseSquares = _mm_mul_ps(sseValues, sseValues);
+			sseSquares = _mm_mul_ps(sseValue, sseValue);
 			sum += sseSquares.m128_f32[0] + sseSquares.m128_f32[1] + sseSquares.m128_f32[2] + sseSquares.m128_f32[3];
 		}
 
