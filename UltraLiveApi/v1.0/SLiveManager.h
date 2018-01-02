@@ -90,7 +90,7 @@ public:
 	int SLiveConfigStream(uint64_t iIntanceID, uint64_t iStreamID, const char *cJson);
 	int SLiveClearIntances(uint64_t iIntanceID);
 	int SLiveReNameStream(uint64_t iIntanceID, uint64_t iStreamID, const char *NewName);
-	int SLiveAdd2Agent(const char *StreamName);
+	int SLiveAdd2Agent(const char *StreamName, bool bAdd2PGM);
 	int SLiveGetStreamSize(uint64_t iIntanceID, uint64_t StreamID, UINT *Width, UINT *Height);
 	int SLiveDisplayDevices(char **DevicesList);
 	int SLiveSetCropping(uint64_t iInstanceID, uint64_t iStreamID, float left, float top, float right, float bottom);
@@ -289,6 +289,7 @@ private:
 	CDeinterlacer *Deinterlacer;
 	CDeinterlacer *DeinterlacerLocal;
 	DeinterlacerConfig DeinterConfig;
+	bool bNeedAgentInPGM;
 };
 
 #endif

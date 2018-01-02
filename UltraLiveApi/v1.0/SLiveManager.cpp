@@ -589,7 +589,7 @@ CSLiveManager::CSLiveManager()
 	bStartView = false;
 	Deinterlacer = NULL;
 	DeinterlacerLocal = NULL;
-	m_D3DRender = NULL;
+	bNeedAgentInPGM = false;
 }
 
 CSLiveManager::~CSLiveManager()
@@ -3799,7 +3799,7 @@ bool CSLiveManager::ScanSourceElmentByClassName(const char *ClassName, List<Valu
 	{
 		CInstanceProcess *Process = m_InstanceList.GetAt(i);
 
-		if (Process && !Process->bLittlePre && !Process->IsLiveInstance)
+		if (Process && !Process->bLittlePre && (Process->IsLiveInstance == bNeedAgentInPGM))
 		{
 			for (int j = 0; j < Process->m_VideoList.Num(); ++j)
 			{
@@ -3889,7 +3889,7 @@ int CSLiveManager::SLiveReNameStream(uint64_t iIntanceID, uint64_t iStreamID, co
 	return 0;
 }
 
-int CSLiveManager::SLiveAdd2Agent(const char *StreamName)
+int CSLiveManager::SLiveAdd2Agent(const char *StreamName, bool bAdd2PGM)
 {
 	Log::writeMessage(LOG_RTSPSERV, 1, "LiveSDK_Log:%s Invoke begin! bSelect", __FUNCTION__);
 	try
@@ -3906,6 +3906,7 @@ int CSLiveManager::SLiveAdd2Agent(const char *StreamName)
 			Value data;
 			data["Name"] = StreamName;
 
+			bNeedAgentInPGM = bAdd2PGM;
 
 // 			for (int i = 0; i < m_InstanceList.GetSize(); ++i)
 // 			{
@@ -3914,7 +3915,12 @@ int CSLiveManager::SLiveAdd2Agent(const char *StreamName)
 // 				if (Process && !Process->bLittlePre && !Process->IsLiveInstance)
 // 				{
 					char TemID[50] = { 0 };
-					sprintf_s(TemID, "%llu", (uint64_t)LocalInstance);
+					if (!bAdd2PGM)
+						sprintf_s(TemID, "%llu", (uint64_t)LocalInstance);
+					else
+					{
+						sprintf_s(TemID, "%llu", (uint64_t)LiveInstance);
+					}
 					data["IntanceID"] = TemID;
 //					break;
 // 				}

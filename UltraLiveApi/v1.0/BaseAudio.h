@@ -4,7 +4,7 @@
 
 #ifdef ULTRALIVEAPI_EXPORTS
 typedef unsigned long long  uint64_t;
-typedef void (*AudioDBCallBack)(uint64_t StreamID, int db);
+typedef void(*AudioDBCallBack)(uint64_t StreamID, float leftDb, float rightDb);
 #endif
  enum
  {
@@ -64,7 +64,7 @@ public:
 		float RVolumeQuotiety,                     //right volume quotiety
 		float PVolumeQuotiety,                      //PGMvolume quotiety
 		bool  bPlayPcmLocal, bool  bPlayPcmLive, float quotietyVolume, bool Projector);
-	void CaculateVolume(LPVOID pBuffer, int& numAudioFrames, void **OutBuffer);
+	void CaculateVolume(LPVOID pBuffer, int& numAudioFrames, void **OutBuffer,bool bOnlyCallBack = false);
 	void VolumeCaculate(char* buf, UINT32 size, double vol);
 
 protected:

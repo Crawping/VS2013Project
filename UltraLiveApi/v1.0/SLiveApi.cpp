@@ -202,9 +202,9 @@ int SLiveReNameStream(uint64_t iIntanceID, uint64_t iStreamID, const char *NewNa
 {
 	return CSLiveManager::GetInstance()->SLiveReNameStream(iIntanceID, iStreamID, NewName);
 }
-int SLiveAdd2Agent(const char *StreamName)
+int SLiveAdd2Agent(const char *StreamName, bool bAdd2PGM)
 {
-	return CSLiveManager::GetInstance()->SLiveAdd2Agent(StreamName);
+	return CSLiveManager::GetInstance()->SLiveAdd2Agent(StreamName, bAdd2PGM);
 }
 
 int SLiveGetStreamSize(uint64_t iIntanceID, uint64_t StreamID, UINT *Width, UINT *Height)

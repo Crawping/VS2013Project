@@ -18,7 +18,7 @@ enum DBOperation
 };
 
 typedef unsigned long long  uint64_t;
-typedef void(*AudioDBCallBack)(uint64_t StreamID, int db);
+typedef void(*AudioDBCallBack)(uint64_t StreamID, float leftDb,float rightDb);
 typedef void(*NickNameCallBack)(uint64_t InstanceID, uint64_t StreamID, const char *NickName);
 
 #endif // !ULTRALIVEAPI_EXPORTS
@@ -133,9 +133,10 @@ struct CSampleData {
 	bool bDisableAudio;
 	bool bFieldSignal;
 	Json::Value *UserData;
-	inline CSampleData() { UserData = NULL; refs = 1; bDisableAudio = false; SampleData = NULL; bFieldSignal = false; }
+	inline CSampleData() { lpData = NULL; UserData = NULL; refs = 1; bDisableAudio = false; SampleData = NULL; bFieldSignal = false; }
 	inline CSampleData(IMediaSample *Sample) :SampleData(Sample)
 	{
+		lpData = NULL;
 		refs = 1;
 		SampleData->AddRef();
 		bDisableAudio = false;
@@ -146,7 +147,7 @@ struct CSampleData {
 		{
 			SampleData->Release();
 		}
-		else
+		else if (lpData)
 		{
 			Free(lpData);
 		}

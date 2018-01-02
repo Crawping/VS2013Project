@@ -1107,12 +1107,13 @@ inline void CalculateVolumeLevels(float *buffer, int totalFloats, float mulVal, 
 	if ((UPARAM(buffer) & 0xF) == 0)
 	{
 		UINT alignedFloats = totalFloats & 0xFFFFFFFC;
-		__m128 sseMulVal = _mm_set_ps1(mulVal);
+		//__m128 sseMulVal = _mm_set_ps1(mulVal);
 		__m128 sseScaledVals;
 		__m128 sseSquares;
 		for (UINT i = 0; i<alignedFloats; i += 4)
 		{
-			sseScaledVals = _mm_mul_ps(_mm_load_ps(buffer + i), sseMulVal);
+			//sseScaledVals = _mm_mul_ps(_mm_load_ps(buffer + i), sseMulVal);
+			sseScaledVals = _mm_load_ps(buffer + i);
 
 			/*compute squares and add them to the sum*/
 			sseSquares = _mm_mul_ps(sseScaledVals, sseScaledVals);

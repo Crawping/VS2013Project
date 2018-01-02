@@ -28,7 +28,7 @@ typedef struct PushStauts
 }PushStauts;
 
 //音频DB值回调
-typedef void(*AudioDBCallBack)(uint64_t StreamID, int db);
+typedef void(*AudioDBCallBack)(uint64_t StreamID, float leftDb,float rightDb);
 //推流状态回调
 typedef void(*PushStatusCallBack)(uint64_t InstanceID, int BitRate, int FPS, int iStatus,bool IsReject);
 typedef void(*PushStatusCallBack2)(uint64_t InstanceID, int FPS, PushStauts *Status);
@@ -822,7 +822,7 @@ extern "C" {
 	2017年02月28日                                           修改定义接口
 	/************************************************************************/
 
-	API_EXPORT int SLiveAdd2Agent(const char *StreamName);
+	API_EXPORT int SLiveAdd2Agent(const char *StreamName,bool bAdd2PGM = false);
 
 	/************************************************************************/
 	/* 函数功能：                  获取流的大小StreamID必须为视频流
