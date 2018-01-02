@@ -653,7 +653,7 @@ void VideoSource::FrameCallBackFunc(void* frame, int frame_type, const void* ctx
 			EnterCriticalSection(&(This_->DataLock));
 			if (!This_->m_pMPMediaInfo.has_video)
 			{
-				VolumeCaculate(pMPFrameInfo->frame_data[0], pMPFrameInfo->frame_size[0], This_->m_iVolume / 100.0);
+				//VolumeCaculate(pMPFrameInfo->frame_data[0], pMPFrameInfo->frame_size[0], This_->m_iVolume / 100.0);
 				This_->m_pts = pMPFrameInfo->pts - This_->m_bFirstTsTimeStamp;
 				
 				CSampleData* audioSample = new CSampleData;
@@ -690,7 +690,7 @@ void VideoSource::FrameCallBackFunc(void* frame, int frame_type, const void* ctx
 					mp_release_frame(&frame);
 					return;
 				}
-				VolumeCaculate(pMPFrameInfo->frame_data[0], pMPFrameInfo->frame_size[0], This_->m_iVolume / 100.0);
+				//VolumeCaculate(pMPFrameInfo->frame_data[0], pMPFrameInfo->frame_size[0], This_->m_iVolume / 100.0);
 				//This_->m_pts = pMPFrameInfo->pts - This_->m_bFirstTsTimeStamp;
 				CSampleData* audioSample = new CSampleData;
 
@@ -2081,24 +2081,11 @@ void VideoSource::YUV420_2_RGB32()
 
 					if (audio_pts <= video_pts + m_interval)
 					{
-						EnterCriticalSection(&CallBackLock);
-						for (int i = 0; i < m_ListCallBack.Num(); ++i)
+						if (m_pDemandMediaAudio)
 						{
-							__DataCallBack &OneCallBack = m_ListCallBack[i];
-
-							tsAudio->pAudioFormat = (void*)&audioFormat;
-							if (OneCallBack.CallBack)
-								OneCallBack.CallBack(OneCallBack.Context, tsAudio);
+							m_pDemandMediaAudio->PushAudio(tsAudio->lpData, tsAudio->dataLength, tsAudio->timestamp, this, enteredSceneCount != 0);
 						}
-						LeaveCriticalSection(&CallBackLock);
-
-						{
-							if (m_pDemandMediaAudio && enteredSceneCount)
-							{
-								m_pDemandMediaAudio->PushAudio(tsAudio->lpData, tsAudio->dataLength, tsAudio->timestamp);
-							}
-							tsAudio->Release();
-						}
+						tsAudio->Release();
 					}
 					else
 					{
@@ -2123,19 +2110,9 @@ void VideoSource::YUV420_2_RGB32()
 					m_AudioAACBuffer.pop_front();
 					audio_pts = tsAudio->timestamp;
 
-					EnterCriticalSection(&CallBackLock);
-					for (int i = 0; i < m_ListCallBack.Num(); ++i)
+					if (m_pDemandMediaAudio)
 					{
-						__DataCallBack &OneCallBack = m_ListCallBack[i];
-						tsAudio->pAudioFormat = (void*)&audioFormat;
-						if (OneCallBack.CallBack)
-							OneCallBack.CallBack(OneCallBack.Context, tsAudio);
-					}
-					LeaveCriticalSection(&CallBackLock);
-
-					if (m_pDemandMediaAudio && enteredSceneCount)
-					{
-						m_pDemandMediaAudio->PushAudio(tsAudio->lpData, tsAudio->dataLength, tsAudio->timestamp);
+						m_pDemandMediaAudio->PushAudio(tsAudio->lpData, tsAudio->dataLength, tsAudio->timestamp,this,enteredSceneCount != 0);
 					}
 					tsAudio->Release();
 
@@ -2720,6 +2697,33 @@ void VideoSource::ChangeShader()
 		}
 		strShaderOld.Clear();
 	}
+}
+
+void VideoSource::PlayCallBackAudio(LPBYTE lpData, UINT len)
+{
+	CSampleData Audio;
+	Audio.bAudio = true;
+	Audio.lpData = lpData;
+	Audio.dataLength = len;
+	WAVEFORMATEX FormatAudio = audioFormat;
+
+	if (FormatAudio.nChannels > 2)
+	{
+		FormatAudio.nChannels = 2;
+		FormatAudio.wBitsPerSample = audioFormat.wBitsPerSample * 2;
+	}
+
+	EnterCriticalSection(&CallBackLock);
+	for (int i = 0; i < m_ListCallBack.Num(); ++i)
+	{
+		__DataCallBack &OneCallBack = m_ListCallBack[i];
+		Audio.pAudioFormat = (void*)&FormatAudio;
+		if (OneCallBack.CallBack)
+			OneCallBack.CallBack(OneCallBack.Context, &Audio);
+	}
+	LeaveCriticalSection(&CallBackLock);
+
+	Audio.lpData = NULL;//不是动态申请的置NULL
 }
 
 
