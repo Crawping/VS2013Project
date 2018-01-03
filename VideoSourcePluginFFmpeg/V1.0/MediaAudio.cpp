@@ -151,7 +151,10 @@ void CDemandMediaAudio::ResetAudioParam(const AudioParam & sAudioParam)
 
 	outputBuffer.SetSize(sampleSegmentSize);
 
-	sampleBuffer.RemoveRange(0, sampleBuffer.Num());
+	if (!sampleSegmentSize)
+	{
+		sampleBuffer.RemoveRange(0, sampleBuffer.Num());
+	}
 
 	LeaveCriticalSection(&sampleBufferLock);
 	Log::writeMessage(LOG_RTSPSERV, 1, "%s invoke end!",__FUNCTION__);

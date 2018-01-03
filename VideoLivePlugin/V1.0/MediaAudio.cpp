@@ -150,7 +150,10 @@ void CDemandMediaAudio::ResetAudioParam(const AudioParam & sAudioParam)
 
 	outputBuffer.SetSize(sampleSegmentSize);
 	
-	sampleBuffer.RemoveRange(0, sampleBuffer.Num());
+	if (!sampleSegmentSize)
+	{
+		sampleBuffer.RemoveRange(0, sampleBuffer.Num());
+	}
 
 	LeaveCriticalSection(&sampleBufferLock);
 }

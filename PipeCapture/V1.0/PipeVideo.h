@@ -149,6 +149,7 @@ class PipeAudioSource : public IBaseAudio
 	long long m_iLastPts;
 	bool bLiveIntance;
 	QWORD lastTimestamp;
+	float fVolume;
 protected:
 	virtual bool GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp);
 	virtual void ReleaseBuffer();
@@ -159,8 +160,8 @@ public:
 	const AudioParam& GetAudioParam();
 	PipeAudioSource();
 	~PipeAudioSource();
-
-	void ReceiveAudio(LPBYTE lpData, UINT dataLength, long long pts );
+	void UpdateSettings(Value &JsonParam);
+	void ReceiveAudio(LPBYTE lpData, UINT dataLength, long long pts,bool bCanPlay );
 	void FlushSamples();
 
 	void SetLiveInstance(bool bLiveIntance);

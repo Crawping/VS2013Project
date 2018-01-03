@@ -680,51 +680,69 @@ void PipeVideo::ReceiveMediaSample(ISampleData *sample, bool bAudio)
 	if (!sample /*|| !bCapturing*/)
 		return;
 
-	//if (bCapturing && bAudio && NULL != m_pAudioWaveOut && (m_dataCallBack == NULL || (m_dataCallBack&&enteredSceneCount)))
-	//{
-	//	m_pAudioWaveOut->push_pcm_data((char*)sample->lpData, sample->AInfo->Datalen);
-	//}
+	//互动在这里做了增益
+	if (bAudio && audioOut)
+	{
+		if (audioOut->fVolume != 1.0f)
+		{
+			short *Tem = (short*)sample->lpData;
+			for (int i = 0; i < sample->AInfo->Datalen; i += 2)
+			{
+				long sVolume = Tem[i / 2];
+
+				sVolume *= audioOut->fVolume;
+
+				if (sVolume > 0x7fff)
+				{
+					sVolume = 0x7fff;
+				}
+				else if (sVolume < -0x8000)
+				{
+					sVolume = -0x8000;
+				}
+
+				Tem[i / 2] = (short)sVolume;
+			}
+		}
+	}
 
 	OSEnterMutex(hListMutex);
 	if (m_ListCallBack.Num())
 	{
-		if (bAudio)//音频
+		if (!bAudio)//音频
 		{
-			CSampleData      *audioSample = new CSampleData;
-			audioSample->bAudio = bAudio;
-			audioSample->dataLength = sample->AInfo->Datalen;
-			audioSample->lpData = (LPBYTE)Allocate_Bak(audioSample->dataLength);//pointer; //
-			memcpy(audioSample->lpData, sample->lpData, audioSample->dataLength);
-			audioSample->timestamp = sample->AInfo->Timestamp;
-			audioSample->pAudioFormat = (void*)&audioFormat;
+			CSampleData  VideoSample;;
+
+			VideoSample.bAudio = false;
+			VideoSample.dataLength = sample->VInfo->Datalen;
+			VideoSample.lpData = sample->lpData;// (LPBYTE)Allocate_Bak(VideoSample->dataLength);
+			VideoSample.cx = sample->VInfo->Width;
+			VideoSample.cy = sample->VInfo->Height;
+			VideoSample.colorType = colorType;
+			VideoSample.bFieldSignal = bInterlaceSignal;
 
 			for (int i = 0; i < m_ListCallBack.Num(); ++i)
 			{
 				__DataCallBack &OneBack = m_ListCallBack[i];
-				OneBack.CallBack(OneBack.Context, audioSample);
+				OneBack.CallBack(OneBack.Context, &VideoSample);
 			}
-			audioSample->Release();
-		} 
-		else  //视频
+			VideoSample.lpData = NULL;
+		}
+		else
 		{
-			CSampleData   *VideoSample = new CSampleData;
-
-			VideoSample->bAudio = false;
-			VideoSample->dataLength = sample->VInfo->Datalen;
-			VideoSample->lpData = (LPBYTE)Allocate_Bak(VideoSample->dataLength);//pointer; //
-			VideoSample->cx = sample->VInfo->Width;
-			VideoSample->cy = sample->VInfo->Height;
-			VideoSample->colorType = colorType;
-			VideoSample->bFieldSignal = bInterlaceSignal;
-
-			memcpy(VideoSample->lpData, sample->lpData, VideoSample->dataLength);
+			CSampleData  audioSample;
+			audioSample.bAudio = true;
+			audioSample.dataLength = sample->AInfo->Datalen;
+			audioSample.lpData = sample->lpData;// (LPBYTE)Allocate_Bak(audioSample->dataLength);
+			audioSample.timestamp = sample->AInfo->Timestamp;
+			audioSample.pAudioFormat = (void*)&audioFormat;
 
 			for (int i = 0; i < m_ListCallBack.Num(); ++i)
 			{
 				__DataCallBack &OneBack = m_ListCallBack[i];
-				OneBack.CallBack(OneBack.Context, VideoSample);
+				OneBack.CallBack(OneBack.Context, &audioSample);
 			}
-			VideoSample->Release();
+			audioSample.lpData = NULL;
 		}
 	}
 
@@ -806,6 +824,10 @@ void PipeVideo::ReceiveMediaSample(ISampleData *sample, bool bAudio)
 	}
 	else
 	{
+		if (bAudio && audioOut)
+		{
+			audioOut->ReceiveAudio(sample->lpData, sample->VInfo->Datalen, sample->VInfo->Timestamp, false);
+		}
 		sample->Release();
 		FlushSamples();
 	}
@@ -4930,7 +4952,7 @@ DWORD PipeVideo::AudioThread(LPVOID Param)
 				{
 					if (Video->audioOut)
 					{
-						Video->audioOut->ReceiveAudio(__AudioParam.pData->lpData, __AudioParam.len, __AudioParam.TimeStamp);
+						Video->audioOut->ReceiveAudio(__AudioParam.pData->lpData, __AudioParam.len, __AudioParam.TimeStamp,true);
 					}
 					__AudioParam.pData->Release();
 
@@ -4974,3 +4996,4 @@ void PipeVideo::ChangeShader()
 
 	}
 }
+

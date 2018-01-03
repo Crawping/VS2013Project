@@ -30,6 +30,7 @@ PipeAudioSource::PipeAudioSource()
 	hAudioMutex = NULL;
 	m_pSecWaveOut = NULL;
 	lastTimestamp = 0;
+	fVolume = 1.0f;
 }
 
 bool PipeAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp)
@@ -43,39 +44,6 @@ bool PipeAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *times
 			OSLeaveMutex(hAudioMutex);
 			return false;
 		}
-
-// 		int64_t pts;
-// 		int samplesProcessed = 0;
-// 		while (samplesProcessed != sampleFrameCount) {
-// 			int remaining = sampleFrameCount - samplesProcessed;
-// 			AudioTimestamp &ts = sampleBufferPts[0];
-// 			if (m_isFirstDiffTimeWithAPI && (LastTimeTimeStamp > 0))
-// 			{
-// 				m_lTimeDiffWithAPI = 0;
-// 				m_isFirstDiffTimeWithAPI = false;
-// 				m_lTimeDiffWithAPI = LastTimeTimeStamp - ts.pts;
-// 				Log::writeMessage(LOG_RTSPSERV,1,"LINE:%d,FUNC:%s 第一次初始化:API->GetAudioTime() :%lld.  ts.pts:%lld. m_lTimeDiffWithAPI :%lld.",
-// 					__LINE__, __FUNCTION__, LastTimeTimeStamp, ts.pts, m_lTimeDiffWithAPI);
-// 			}
-// 			if (ts.pts - m_iLastTimeStamp < 0)     //互动重现连接,重现初始化参数
-// 			{
-// 				m_iLastTimeStamp = 0;
-// 				m_lTimeDiffWithAPI = 0;
-// 				m_isFirstDiffTimeWithAPI = true;
-// 			}
-// 			m_iLastTimeStamp = ts.pts;
-// 			ts.count -= remaining;
-// 			samplesProcessed += remaining;
-// 			if (ts.count < 0) {
-// 				samplesProcessed += ts.count;
-// 				sampleBufferPts.pop_front();
-// 			}
-// 			if (sampleBufferPts.size() <= 0)
-// 			{
-// 				return false;
-// 			}
-// 			pts = ts.pts;
-// 		}
 
         mcpy(outputBuffer.Array(), sampleBuffer.Array(), sampleSegmentSize);
         sampleBuffer.RemoveRange(0, sampleSegmentSize);
@@ -250,64 +218,59 @@ bool PipeAudioSource::IsNeedRemove() const
 	return !bLiveIntance && !audioSegments.Num();
 }
 
-void PipeAudioSource::ReceiveAudio(LPBYTE lpData, UINT dataLength,long long pts)
+void PipeAudioSource::ReceiveAudio(LPBYTE lpData, UINT dataLength, long long pts, bool bCanPlay)
 {
 	if (lpData)
-    {
-		bool bPlayLive = false;
-		if (bLiveIntance)
+	{
+		if (bCanPlay)
 		{
+			bool bPlayLive = false;
+			if (bLiveIntance)
+			{
+				OSEnterMutex(hAudioMutex);
+				sampleBuffer.AppendArray(lpData, dataLength);
+				OSLeaveMutex(hAudioMutex);
+				bPlayLive = m_bPlayPcmLive;
+			}
+			else
+			{
+				OSEnterMutex(hAudioMutex);
+				sampleBuffer.RemoveRange(0, sampleBuffer.Num());
+				OSLeaveMutex(hAudioMutex);
+			}
+			int Len = dataLength;
+			char *OutBuffer;
+			CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer);
+
 			OSEnterMutex(hAudioMutex);
-			sampleBuffer.AppendArray(lpData, dataLength);
-// 			AudioTimestamp audioTimestamp;
-// 			audioTimestamp.count = dataLength / m_iBlockSize;
-// 			audioTimestamp.pts = pts;
-// 			sampleBufferPts.push_back(audioTimestamp);
-// 			if (pts - m_iLastPts > 50 || m_iLastPts - pts > 50)
-// 			{
-// 				Log::writeMessage(LOG_RTSPSERV, 1, "LINE:%d,FUNC:%s 音频数据有抖动: LastPts : %lld. CurrntPts : %lld. diff = %lld.",
-// 					__LINE__, __FUNCTION__, m_lTimeDiffWithAPI + m_iLastPts, m_lTimeDiffWithAPI + pts, pts - m_iLastPts);
-// 			}
-// 			m_iLastPts = pts;
+			if (m_pAudioWaveOut && (m_bPlayPcmLocal || bPlayLive))
+			{
+				m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len);
+
+				if (!bSameDevice && bProjector && m_pSecWaveOut)
+					m_pSecWaveOut->push_pcm_data((char*)OutBuffer, Len);
+
+			}
+			else if (bProjector)
+			{
+				if (bSameDevice && m_pAudioWaveOut)
+				{
+					m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len);
+				}
+				else if (m_pSecWaveOut)
+				{
+					m_pSecWaveOut->push_pcm_data((char*)OutBuffer, Len);
+				}
+			}
 			OSLeaveMutex(hAudioMutex);
-			bPlayLive = m_bPlayPcmLive;
 		}
 		else
 		{
-			OSEnterMutex(hAudioMutex);
-			sampleBuffer.RemoveRange(0, sampleBuffer.Num());
-			OSLeaveMutex(hAudioMutex);
-		}
-
-		OSEnterMutex(hAudioMutex);
-		int Len = dataLength;
-		if (m_pAudioWaveOut && (m_bPlayPcmLocal || bPlayLive))
-		{
+			int Len = dataLength;
 			char *OutBuffer;
-			CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer);
-
-			m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len);
-
-			if (!bSameDevice && bProjector && m_pSecWaveOut)
-				m_pSecWaveOut->push_pcm_data((char*)OutBuffer, Len);
-
+			CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer,true);
 		}
-		else if (bProjector)
-		{
-			char *OutBuffer;
-			CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer);
-
-			if (bSameDevice && m_pAudioWaveOut)
-			{
-				m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len);
-			}
-			else if (m_pSecWaveOut)
-			{
-				m_pSecWaveOut->push_pcm_data((char*)OutBuffer, Len);
-			}
-		}
-		OSLeaveMutex(hAudioMutex);
-    }
+	}
 }
 
 void PipeAudioSource::FlushSamples()
@@ -315,6 +278,11 @@ void PipeAudioSource::FlushSamples()
     OSEnterMutex(hAudioMutex);
     sampleBuffer.Clear();
     OSLeaveMutex(hAudioMutex);
+}
+
+void PipeAudioSource::UpdateSettings(Value &JsonParam)
+{
+	fVolume = JsonParam["Volume"].asDouble();
 }
 
 void PipeAudioSource::OnAudioDeviceChanged(const String &MonitorDevices, const String &SecMonitor)
