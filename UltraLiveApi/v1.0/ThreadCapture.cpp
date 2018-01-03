@@ -1330,31 +1330,30 @@ void CSLiveManager::MainAudioLoop()
 
 					if (desktopVol + desktopVolGain*m_quotietyVolume != 1.0f)
 						VolumeCaculate(mixBuffer.Array(), audioSampleSize * 2, desktopVol + desktopVolGain*m_quotietyVolume);
-
-
-					for (int iIndex = 0, iCount = 0; iIndex < audioSampleSize * 2; iIndex += 2, ++iCount){
-
-						leftaudioData[iCount] = mixBuffer[iIndex];
-						rightaudioData[iCount] = mixBuffer[iIndex + 1];
-					}
-				
-					if (1.f != leftdesktopVol + leftdesktopVolGain*m_quotietyVolume)
-						VolumeCaculate(leftaudioData.Array(), audioSampleSize, leftdesktopVol + leftdesktopVolGain*m_quotietyVolume);
-					
-					if (1.f != rightdesktopVol + rightdesktopVolGain*m_quotietyVolume)
-						VolumeCaculate(rightaudioData.Array(), audioSampleSize, rightdesktopVol + rightdesktopVolGain*m_quotietyVolume);
-
-					for (int iIndex = 0, iCount = 0; iIndex < audioSampleSize * 2; iIndex += 2, ++iCount){
-
-						mixBuffer[iIndex] = leftaudioData[iCount];
-						mixBuffer[iIndex + 1] = rightaudioData[iCount];
-					}
-
 				}
 				//----------------------------------------------------------------------------
 				// convert RMS and Max of samples to dB 
 				audioFramesSinceMeterUpdate += audioSampleSize;
 				if (audioFramesSinceMeterUpdate >= (audioSampleSize * 10)) {
+
+					for (int iIndex = 0, iCount = 0; iIndex < audioSampleSize * 2; iIndex += 2, ++iCount)
+					{
+						leftaudioData[iCount] = mixBuffer[iIndex];
+						rightaudioData[iCount] = mixBuffer[iIndex + 1];
+					}
+
+// 					if (1.f != leftdesktopVol + leftdesktopVolGain*m_quotietyVolume)
+// 						VolumeCaculate(leftaudioData.Array(), audioSampleSize, leftdesktopVol + leftdesktopVolGain*m_quotietyVolume);
+// 
+// 					if (1.f != rightdesktopVol + rightdesktopVolGain*m_quotietyVolume)
+// 						VolumeCaculate(rightaudioData.Array(), audioSampleSize, rightdesktopVol + rightdesktopVolGain*m_quotietyVolume);
+// 
+// 					for (int iIndex = 0, iCount = 0; iIndex < audioSampleSize * 2; iIndex += 2, ++iCount){
+// 
+// 						mixBuffer[iIndex] = leftaudioData[iCount];
+// 						mixBuffer[iIndex + 1] = rightaudioData[iCount];
+// 					}
+
 					CalculateVolumeLevels(rightaudioData.Array(), audioSampleSize, 1.0f, rightdesktopRMS, rightdesktopMx);
 					CalculateVolumeLevels(leftaudioData.Array(), audioSampleSize, 1.0f, leftdesktopRMS, leftdesktopMx);
 

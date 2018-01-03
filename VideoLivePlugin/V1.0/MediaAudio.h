@@ -46,7 +46,7 @@ public:
 	virtual void UpdateSettings(Value &JsonParam);
 
 	void ResetAudioParam(const AudioParam & sAudioParam);
-	void PushAudio(const void *lpData, unsigned int size, int64_t pts);
+	void PushAudio(const void *lpData, unsigned int size, int64_t pts, IBaseVideo *Video, bool bCanPlay);
 	void SetVolumef(float Volume);
 	virtual void SetLiveInstance(bool bLiveInstance);
 	virtual bool IsNeedRemove() const;

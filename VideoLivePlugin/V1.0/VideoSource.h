@@ -47,6 +47,7 @@ public:
 	void EndScene();
 	String ChooseShader(bool bNeedField = true);
 	void   ChangeShader();
+	void   PlayCallBackAudio(LPBYTE lpData, UINT len);
 	
 private:
 	HANDLE HMediaProcess;

@@ -1113,18 +1113,10 @@ void VideoLiveSource::Synchronization()
 		if (Last_inf_Audio&&Last_inf_Audio->lpData && (Last_inf_Audio->timestamp >= iLastVideoPts) &&( Last_inf_Audio->timestamp <= iCurrentVideoPts)) {
 			
 			Last_inf_Audio->pAudioFormat = (void*)&audioFormat;
-			EnterCriticalSection(&CallBackLock);
-			for (int i = 0; i < m_ListCallBack.Num(); ++i)
-			{
-				__DataCallBack &OneCallBack = m_ListCallBack[i];
-				if (OneCallBack.CallBack)
-					OneCallBack.CallBack(OneCallBack.Context, Last_inf_Audio);
-			}
-			LeaveCriticalSection(&CallBackLock);
 
-			if (m_pDemandMediaAudio && enteredSceneCount)
+			if (m_pDemandMediaAudio)
 			{
-				m_pDemandMediaAudio->PushAudio(Last_inf_Audio->lpData, Last_inf_Audio->dataLength, Last_inf_Audio->timestamp);
+				m_pDemandMediaAudio->PushAudio(Last_inf_Audio->lpData, Last_inf_Audio->dataLength, Last_inf_Audio->timestamp, this, enteredSceneCount != 0);
 				mp_get_frame(HMediaProcess, 2, m_fAudioWarnning);
 				if (iLogIndex > 550 && iLogIndex < 560)
 					Log(TEXT("LINE : %d, FUNC : %s ,äÖÈ¾ÒôÆµaudio_pts = %d, mp_get_frame  m_PCMuffer.size = %d,This =0x%p"), __LINE__, String(__FUNCTION__).Array(), audio_pts, m_PCMuffer.unsafe_size(), this);
@@ -1191,18 +1183,10 @@ void VideoLiveSource::Synchronization()
 						}
 					}
 					inf_Audio->pAudioFormat = (void*)&audioFormat;
-					EnterCriticalSection(&CallBackLock);
-					for (int i = 0; i < m_ListCallBack.Num(); ++i)
-					{
-						__DataCallBack &OneCallBack = m_ListCallBack[i];
-						if (OneCallBack.CallBack)
-							OneCallBack.CallBack(OneCallBack.Context, inf_Audio);
-					}
-					LeaveCriticalSection(&CallBackLock);
 
-					if (m_pDemandMediaAudio && enteredSceneCount)
+					if (m_pDemandMediaAudio)
 					{
-						m_pDemandMediaAudio->PushAudio(inf_Audio->lpData, inf_Audio->dataLength, inf_Audio->timestamp);
+						m_pDemandMediaAudio->PushAudio(inf_Audio->lpData, inf_Audio->dataLength, inf_Audio->timestamp, this, enteredSceneCount !=0);
 						mp_get_frame(HMediaProcess, 2, m_fAudioWarnning);
 						if (iLogIndex > 550 && iLogIndex < 560)
 							Log(TEXT("LINE : %d, FUNC : %s ,äÖÈ¾ÒôÆµaudio_pts = %d, mp_get_frame  m_PCMuffer.size = %d,This =0x%p"), __LINE__, String(__FUNCTION__).Array(), audio_pts, m_PCMuffer.unsafe_size(), this);
@@ -1666,4 +1650,31 @@ void VideoLiveSource::ChangeShader()
 		strShader = ChooseShader();
 		colorFieldConvertShader = D3DRender->CreatePixelShaderFromFile(strShader);
 	}
+}
+
+void VideoLiveSource::PlayCallBackAudio(LPBYTE lpData, UINT len)
+{
+	CSampleData Audio;
+	Audio.bAudio = true;
+	Audio.lpData = lpData;
+	Audio.dataLength = len;
+	WAVEFORMATEX FormatAudio = audioFormat;
+
+	if (FormatAudio.nChannels > 2)
+	{
+		FormatAudio.nChannels = 2;
+		FormatAudio.wBitsPerSample = audioFormat.wBitsPerSample * 2;
+	}
+
+	EnterCriticalSection(&CallBackLock);
+	for (int i = 0; i < m_ListCallBack.Num(); ++i)
+	{
+		__DataCallBack &OneCallBack = m_ListCallBack[i];
+		Audio.pAudioFormat = (void*)&FormatAudio;
+		if (OneCallBack.CallBack)
+			OneCallBack.CallBack(OneCallBack.Context, &Audio);
+	}
+	LeaveCriticalSection(&CallBackLock);
+
+	Audio.lpData = NULL;//²»ÊÇ¶¯Ì¬ÉêÇëµÄÖÃNULL
 }

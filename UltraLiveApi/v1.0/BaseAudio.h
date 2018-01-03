@@ -145,6 +145,7 @@ private:
 	//-----------------------------------------
 
 	float sourceVolume;
+	UINT audioFramesUpdate;
 
 };
 

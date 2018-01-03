@@ -108,6 +108,7 @@ IBaseAudio::IBaseAudio()
 	m_bPlayPcmLive = true;
 	m_quotietyVolume = 3.0f;
 	bProjector = false;
+	audioFramesUpdate = 0;
 }
 
 IBaseAudio::~IBaseAudio()
@@ -902,8 +903,6 @@ void IBaseAudio::CaculateVolume(LPVOID pBuffer, int& numAudioFrames, void **OutB
 {
 	float desktopVolGain = 0, leftdesktopVolGain = 0, rightdesktopVolGain = 0;
 
-	//Convert2Float(pBuffer, numAudioFrames, OutBuffer);
-
 	if (bFloat)
 	{
 		if (leftaudioDataf.Num() < numAudioFrames)
@@ -963,34 +962,54 @@ void IBaseAudio::CaculateVolume(LPVOID pBuffer, int& numAudioFrames, void **OutB
 		
 	}
 
-	//将左右声道拆开
-	//计算左右声道分贝值
-	float LeftDb = 0, RightDb = 0;
-
-	if (bFloat)
-	{
-		for (int iIndex = 0, iCount = 0; iIndex < numAudioFrames; iIndex += 2, iCount += 1){
-			memcpy(&leftaudioDataf[iCount], &TemFloat[iIndex], 4);
-			memcpy(&rightaudioDataf[iCount], &TemFloat[iIndex + 1], 4);
-		}
-
-		CalculateVolumeLevelsFloat(leftaudioDataf.Array(), numAudioFrames / 2, LeftDb);
-		CalculateVolumeLevelsFloat(rightaudioDataf.Array(), numAudioFrames / 2, RightDb);
-	}
-	else
-	{
-		for (int iIndex = 0, iCount = 0; iIndex < numAudioFrames; iIndex += 4, iCount += 2){
-			memcpy(&leftaudioData[iCount], &TemChar[iIndex], 2);
-			memcpy(&rightaudioData[iCount], &TemChar[iIndex + 2], 2);
-		}
-
-		CalculateVolumeLevelsShort(leftaudioData.Array(), numAudioFrames / 2, LeftDb);
-		CalculateVolumeLevelsShort(rightaudioData.Array(), numAudioFrames / 2, RightDb);
-	}
+	UINT SampleSize = inputSamplesPerSec;
 
 	if (AudioDbCB)
 	{
+		if (bFloat)
+		{
+			SampleSize = SampleSize * 4 / 1000;
+			audioFramesUpdate += numAudioFrames * sizeof(float) / 2;
+		}
+		else
+		{
+			SampleSize = SampleSize * 2 / 1000;
+			audioFramesUpdate += numAudioFrames / 2;
+		}
+	}
+	
+	if (AudioDbCB && audioFramesUpdate >= SampleSize * 200)//200ms计算一次
+	{
+		float LeftDb = 0, RightDb = 0;
+		if (bFloat)
+		{
+			//将左右声道拆开
+			for (int iIndex = 0, iCount = 0; iIndex < numAudioFrames; iIndex += 2, iCount += 1)
+			{
+				memcpy(&leftaudioDataf[iCount], &TemFloat[iIndex], 4);
+				memcpy(&rightaudioDataf[iCount], &TemFloat[iIndex + 1], 4);
+			}
+			//计算左右声道分贝值
+			CalculateVolumeLevelsFloat(leftaudioDataf.Array(), numAudioFrames / 2, LeftDb);
+			CalculateVolumeLevelsFloat(rightaudioDataf.Array(), numAudioFrames / 2, RightDb);
+		}
+		else
+		{
+			//将左右声道拆开
+			for (int iIndex = 0, iCount = 0; iIndex < numAudioFrames; iIndex += 4, iCount += 2)
+			{
+				memcpy(&leftaudioData[iCount], &TemChar[iIndex], 2);
+				memcpy(&rightaudioData[iCount], &TemChar[iIndex + 2], 2);
+			}
+			//计算左右声道分贝值
+			CalculateVolumeLevelsShort(leftaudioData.Array(), numAudioFrames / 2, LeftDb);
+			CalculateVolumeLevelsShort(rightaudioData.Array(), numAudioFrames / 2, RightDb);
+		}
+
+
 		AudioDbCB((uint64_t)this, LeftDb, RightDb);
+
+		audioFramesUpdate = 0;
 	}
 
 	if (bOnlyCallBack)
@@ -1124,3 +1143,4 @@ float IBaseAudio::toDB(float RMS)
 		return VOL_MIN;
 	return db;
 }
+

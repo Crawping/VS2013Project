@@ -1,4 +1,5 @@
 #include "MediaAudio.h"
+#include "VideoSource.h"
 
 IMPLEMENT_DYNIC(CDemandMediaAudio, "DemandMediaAudio", "1.0.0.1")
 
@@ -149,10 +150,7 @@ void CDemandMediaAudio::ResetAudioParam(const AudioParam & sAudioParam)
 
 	outputBuffer.SetSize(sampleSegmentSize);
 	
-	if (!sampleSegmentSize)
-	{
-		sampleBuffer.RemoveRange(0, sampleBuffer.Num());
-	}
+	sampleBuffer.RemoveRange(0, sampleBuffer.Num());
 
 	LeaveCriticalSection(&sampleBufferLock);
 }
@@ -228,8 +226,12 @@ lpData ：输入数据的内存
 size：输入数据的长度
 pts：输入数据的时间戳
 ***************************************************/
-void CDemandMediaAudio::PushAudio(const void *lpData, unsigned int size, int64_t pts)
+void CDemandMediaAudio::PushAudio(const void *lpData, unsigned int size, int64_t pts, IBaseVideo *Video, bool bCanPlay)
 {
+	VideoLiveSource *Source = dynamic_cast<VideoLiveSource*>(Video);
+
+	if (!m_uBlockSize || !Source)
+		return;
 	
 	if (m_sAudioParam.iChannel <= 2)
 	{
@@ -254,6 +256,8 @@ void CDemandMediaAudio::PushAudio(const void *lpData, unsigned int size, int64_t
 				Tem[i / 2] = (short)sVolume;
 			}
 		}
+
+		Source->PlayCallBackAudio((LPBYTE)lpData, size);
 	}
 	else
 	{
@@ -261,8 +265,7 @@ void CDemandMediaAudio::PushAudio(const void *lpData, unsigned int size, int64_t
 		if (TemconvertBuffer.Num() < totalSamples)
 			TemconvertBuffer.SetSize(totalSamples);
 
-		if (OutputconvertBuffer.Num() < totalSamples / m_sAudioParam.iChannel * 2)
-			OutputconvertBuffer.SetSize(totalSamples / m_sAudioParam.iChannel * 2);
+		OutputconvertBuffer.SetSize(totalSamples / m_sAudioParam.iChannel * 2);
 
 
 		if (m_sAudioParam.iBitPerSample == 8)
@@ -432,16 +435,74 @@ void CDemandMediaAudio::PushAudio(const void *lpData, unsigned int size, int64_t
 		if (fVolume != 1.0f)
 			MultiplyAudioBuffer(OutputconvertBuffer.Array(), OutputconvertBuffer.Num(),fVolume);
 
-		//m_pAudioWaveOut->push_pcm_data((char*)OutputconvertBuffer.Array(), OutputconvertBuffer.Num() * 4);
+		Source->PlayCallBackAudio((LPBYTE)OutputconvertBuffer.Array(), OutputconvertBuffer.Num() * 4);
 
+		if (bCanPlay)
+		{
+			bool bPlayLive = false;
+
+			if (bLiveInstance)
+			{
+				AudioTimestamp audioTimestamp;
+				EnterCriticalSection(&sampleBufferLock);
+				sampleBuffer.AppendArray((BYTE *)(OutputconvertBuffer.Array()), OutputconvertBuffer.Num() * 4);
+				audioTimestamp.count = size / m_uBlockSize;
+				audioTimestamp.pts = pts;
+				sampleBufferPts.push_back(audioTimestamp);
+				LeaveCriticalSection(&sampleBufferLock);
+				bPlayLive = m_bPlayPcmLive;
+			}
+			else
+			{
+				sampleBuffer.RemoveRange(0, sampleBuffer.Num());
+			}
+
+			int Len = OutputconvertBuffer.Num();
+			char *OutBuffer;
+			CaculateVolume((LPVOID)OutputconvertBuffer.Array(), Len, (void**)&OutBuffer);
+
+			EnterCriticalSection(&sampleBufferLock);
+
+			if (m_pAudioWaveOut && (m_bPlayPcmLocal || bPlayLive))
+			{
+				m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len * 4);
+
+				if (!bSameDevice && bProjector && m_pSecWaveOut)
+					m_pSecWaveOut->push_pcm_data((char*)OutBuffer, Len * 4);
+
+			}
+			else if (bProjector)
+			{
+				if (bSameDevice && m_pAudioWaveOut)
+				{
+					m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len * 4);
+				}
+				else if (m_pSecWaveOut)
+				{
+					m_pSecWaveOut->push_pcm_data((char*)OutBuffer, Len * 4);
+				}
+			}
+			LeaveCriticalSection(&sampleBufferLock);
+		}
+		else
+		{
+			int Len = OutputconvertBuffer.Num();
+			char *OutBuffer;
+			CaculateVolume((LPVOID)OutputconvertBuffer.Array(), Len, (void**)&OutBuffer);
+		}
+		return;
+	}
+
+	if (bCanPlay)
+	{
 		bool bPlayLive = false;
-
+		size = size / m_uBlockSize;
 		if (bLiveInstance)
 		{
 			AudioTimestamp audioTimestamp;
 			EnterCriticalSection(&sampleBufferLock);
-			sampleBuffer.AppendArray((BYTE *)(OutputconvertBuffer.Array()), OutputconvertBuffer.Num() * 4);
-			audioTimestamp.count = size / m_uBlockSize;
+			sampleBuffer.AppendArray(static_cast<const BYTE *>(lpData), size * m_uBlockSize);
+			audioTimestamp.count = size;
 			audioTimestamp.pts = pts;
 			sampleBufferPts.push_back(audioTimestamp);
 			LeaveCriticalSection(&sampleBufferLock);
@@ -451,13 +512,13 @@ void CDemandMediaAudio::PushAudio(const void *lpData, unsigned int size, int64_t
 		{
 			sampleBuffer.RemoveRange(0, sampleBuffer.Num());
 		}
+		int Len = size  * m_uBlockSize;
+		char *OutBuffer;
+		CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer);
 		EnterCriticalSection(&sampleBufferLock);
-		int Len = OutputconvertBuffer.Num() * 4;
+		
 		if (m_pAudioWaveOut && (m_bPlayPcmLocal || bPlayLive))
 		{
-			char *OutBuffer;
-			CaculateVolume((LPVOID)OutputconvertBuffer.Array(), Len, (void**)&OutBuffer);
-
 			m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len);
 
 			if (!bSameDevice && bProjector && m_pSecWaveOut)
@@ -466,9 +527,6 @@ void CDemandMediaAudio::PushAudio(const void *lpData, unsigned int size, int64_t
 		}
 		else if (bProjector)
 		{
-			char *OutBuffer;
-			CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer);
-
 			if (bSameDevice && m_pAudioWaveOut)
 			{
 				m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len);
@@ -479,54 +537,13 @@ void CDemandMediaAudio::PushAudio(const void *lpData, unsigned int size, int64_t
 			}
 		}
 		LeaveCriticalSection(&sampleBufferLock);
-		return;
-	}
-
-	bool bPlayLive = false;
-	size = size / m_uBlockSize;
-	if (bLiveInstance)
-	{
-		AudioTimestamp audioTimestamp;
-		EnterCriticalSection(&sampleBufferLock);
-		sampleBuffer.AppendArray(static_cast<const BYTE *>(lpData), size * m_uBlockSize);
-		audioTimestamp.count = size;
-		audioTimestamp.pts = pts;
-		sampleBufferPts.push_back(audioTimestamp);
-		LeaveCriticalSection(&sampleBufferLock);
-		bPlayLive = m_bPlayPcmLive;
 	}
 	else
 	{
-		sampleBuffer.RemoveRange(0, sampleBuffer.Num());
-	}
-	EnterCriticalSection(&sampleBufferLock);
-	int Len = size  * m_uBlockSize;
-	if (m_pAudioWaveOut && (m_bPlayPcmLocal || bPlayLive))
-	{
+		int Len = size;
 		char *OutBuffer;
-		CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer);
-
-		m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len);
-
-		if (!bSameDevice && bProjector && m_pSecWaveOut)
-			m_pSecWaveOut->push_pcm_data((char*)OutBuffer, Len);
-
+		CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer, true);
 	}
-	else if (bProjector)
-	{
-		char *OutBuffer;
-		CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer);
-
-		if (bSameDevice && m_pAudioWaveOut)
-		{
-			m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len);
-		}
-		else if (m_pSecWaveOut)
-		{
-			m_pSecWaveOut->push_pcm_data((char*)OutBuffer, Len);
-		}
-	}
-	LeaveCriticalSection(&sampleBufferLock);
 }
 
 void CDemandMediaAudio::UpdateSettings(Value &JsonParam)

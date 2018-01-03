@@ -151,11 +151,7 @@ void CDemandMediaAudio::ResetAudioParam(const AudioParam & sAudioParam)
 
 	outputBuffer.SetSize(sampleSegmentSize);
 
-	if (!sampleSegmentSize)
-	{
-		sampleBuffer.RemoveRange(0, sampleBuffer.Num());
-	}
-	
+	sampleBuffer.RemoveRange(0, sampleBuffer.Num());
 
 	LeaveCriticalSection(&sampleBufferLock);
 	Log::writeMessage(LOG_RTSPSERV, 1, "%s invoke end!",__FUNCTION__);
@@ -271,8 +267,7 @@ void CDemandMediaAudio::PushAudio(const void *lpData, unsigned int size, int64_t
 		if (TemconvertBuffer.Num() < totalSamples)
 			TemconvertBuffer.SetSize(totalSamples);
 
-		if (OutputconvertBuffer.Num() < totalSamples / m_sAudioParam.iChannel * 2)
-			OutputconvertBuffer.SetSize(totalSamples / m_sAudioParam.iChannel * 2);
+		OutputconvertBuffer.SetSize(totalSamples / m_sAudioParam.iChannel * 2);
 
 
 		if (m_sAudioParam.iBitPerSample == 8)
@@ -497,7 +492,7 @@ void CDemandMediaAudio::PushAudio(const void *lpData, unsigned int size, int64_t
 		{
 			int Len = OutputconvertBuffer.Num();
 			char *OutBuffer;
-			CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer, true);
+			CaculateVolume((LPVOID)OutputconvertBuffer.Array(), Len, (void**)&OutBuffer, true);
 		}
 		
 		
