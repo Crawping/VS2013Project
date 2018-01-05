@@ -79,6 +79,7 @@ protected:
 	char				m_pps[MAX_SPS_PPS_LEN];
 	int					m_spslen;
 	int					m_ppslen;
+	bool                ConstructSuc;
 
     inline void ClearPackets()
     {
@@ -184,9 +185,11 @@ public:
 		m_pEncoder = NvEncodeCreate(&m_encodeConfig);
 		if (nullptr == m_pEncoder)
 		{
+			ConstructSuc = false;
 			Log::writeMessage(LOG_RTSPSERV, 1, "NvEncodeCreate error!\n");
 			return;			
 		}
+		ConstructSuc = true;
 		m_CurrentPackets.CreateNew();
     }
 	~CNvidiaEncoder()
@@ -463,12 +466,20 @@ public:
 		Log::writeMessage(LOG_RTSPSERV, 1, "不支持动态调整码率");
 		return false;
 	}
+
+	bool IsConstructSuc() const{ return ConstructSuc; }
 };
 
 VideoEncoder* CreateNvidiaEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, int ColorT)
 {
 	Log::writeMessage(LOG_RTSPSERV, 1, "调用CreateNvidiaEncoder");
-
-	return new CNvidiaEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, ColorT);
+	CNvidiaEncoder *NvidiaEncoder = new CNvidiaEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, ColorT);
+	if (!NvidiaEncoder->IsConstructSuc())
+	{
+		Log::writeError(LOG_RTSPSERV, 1, "CreateNvidiaEncoder创建失败");
+		delete NvidiaEncoder;
+		return NULL;
+	}
+	return NvidiaEncoder;
 }
 

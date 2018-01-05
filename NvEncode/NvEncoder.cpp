@@ -569,7 +569,9 @@ void* CNvEncoder::NvEncodeCreate(EncodeConfig* pEncodeConfig)
 	g_RefCount++;
 	if (!g_bLoadNvEncodeLib)
 	{
-		LoadCodecLib();
+		NVENCSTATUS status = LoadCodecLib();
+		if (NV_ENC_ERR_OUT_OF_MEMORY == status)
+			return nullptr;
 		g_bLoadNvEncodeLib = true;
 	}
 	if (pEncodeConfig)
