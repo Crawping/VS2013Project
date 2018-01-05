@@ -1,5 +1,6 @@
 #include "HTTPClient.h"
 #include <winhttp.h>
+#include "curl.h"
 #include "OperatNew.h"
 
 #ifdef OPERATOR_NEW
@@ -395,114 +396,77 @@ failure:
 
 	return ret;
 }
+
+size_t curl_write_data_cb(void *buffer, size_t size, size_t nmemb, void *content)
+{
+	size_t totalSize = size * nmemb;
+	std::string* symbolBuffer = (std::string*)content;
+	if (symbolBuffer)
+	{
+		symbolBuffer->append((char *)buffer, ((char*)buffer) + totalSize);
+	}
+
+	return totalSize;
+}
+
 String HTTPGetString (CTSTR url, CTSTR extraHeaders, int *responseCode)
 {
-    HINTERNET hSession = NULL;
-    HINTERNET hConnect = NULL;
-    HINTERNET hRequest = NULL;
-    URL_COMPONENTS  urlComponents;
-    BOOL secure = FALSE;
-	String result = "";
+ 	String result = "";
 
-    String hostName, path;
-
-    const TCHAR *acceptTypes[] = {
-        TEXT("*/*"),
-        NULL
-    };
-
-    hostName.SetLength(256);
-    path.SetLength(1024);
-
-    zero(&urlComponents, sizeof(urlComponents));
-
-    urlComponents.dwStructSize = sizeof(urlComponents);
-    
-    urlComponents.lpszHostName = hostName;
-    urlComponents.dwHostNameLength = hostName.Length();
-
-    urlComponents.lpszUrlPath = path;
-    urlComponents.dwUrlPathLength = path.Length();
-
-    WinHttpCrackUrl(url, 0, 0, &urlComponents);
-
-    if (urlComponents.nPort == 443)
-        secure = TRUE;
-
-    hSession = WinHttpOpen(TEXT("Blive"), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
-	if (!hSession)
+	CURL *curl = NULL;
+	CURLcode return_code;
+	//curl初始化   
+	curl = curl_easy_init();
+	if (!curl)
 	{
-		DWORD error = GetLastError();
-		goto failure;
-	}        
-
-	hConnect = WinHttpConnect(hSession, hostName, urlComponents.nPort, 0);
-    if (!hConnect)
-        goto failure;
-
-    hRequest = WinHttpOpenRequest(hConnect, TEXT("GET"), path, NULL, WINHTTP_NO_REFERER, acceptTypes, secure ? WINHTTP_FLAG_SECURE|WINHTTP_FLAG_REFRESH : WINHTTP_FLAG_REFRESH);
-    if (!hRequest)
-        goto failure;
-
-    BOOL bResults = WinHttpSendRequest(hRequest, extraHeaders, extraHeaders ? -1 : 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
-
-    // End the request.
-    if (bResults)
-        bResults = WinHttpReceiveResponse(hRequest, NULL);
-	else
-	{
-		DWORD error = GetLastError();
-		goto failure;
+		Log::writeError(LOG_RTSPSERV,1,"%s[%d]: curl easy init failed\n", __FUNCTION__, __LINE__);
+		*responseCode = -1;
+		return result;
 	}
-        
 
-    TCHAR statusCode[8];
-    DWORD statusCodeLen;
+	if (wcsncmp(url, L"https://", 8) == 0)
+	{
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+	}
 
-    statusCodeLen = sizeof(statusCode);
-    if (!WinHttpQueryHeaders (hRequest, WINHTTP_QUERY_STATUS_CODE, WINHTTP_HEADER_NAME_BY_INDEX, &statusCode, &statusCodeLen, WINHTTP_NO_HEADER_INDEX))
-        goto failure;
+	curl_easy_setopt(curl,CURLOPT_HEADER,0);    //设置httpheader 解析, 不需要将HTTP头写传入回调函数  
 
-    *responseCode = wcstoul(statusCode, NULL, 10);	
+	curl_easy_setopt(curl, CURLOPT_URL,WcharToAnsi(url).c_str());   //设置远端地址
 
-    if (bResults && *responseCode == 200)
-    {
-        CHAR buffer[16384];
-        DWORD dwSize, dwOutSize;
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_data_cb);  //执行写入文件流操作的回调函数
 
-        do 
-        {
-            // Check for available data.
-            dwSize = 0;
-            if (!WinHttpQueryDataAvailable(hRequest, &dwSize))
-                goto failure;
+	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5);
 
-            if (!WinHttpReadData(hRequest, (LPVOID)buffer, dwSize, &dwOutSize))
-            {
-                goto failure;
-            }
-            else
-            {
-                if (!dwOutSize)
-                    break;
+	string RetData;
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&RetData);
 
-				// Ensure the string is terminated.
-				buffer[dwOutSize] = 0;
+	return_code = curl_easy_perform(curl);
+	if (CURLE_OK != return_code)
+	{
+		Log::writeError(LOG_RTSPSERV, 1, "curl_easy_perform() failed: %s\n", curl_easy_strerror(return_code));
+		*responseCode = -1;
+		curl_easy_cleanup(curl);
+		return result;
+	}
 
-				String b = String((LPCSTR)buffer);
-				result.AppendString(b);
-            }
-        } while (dwSize > 0);
-    }
+	return_code = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, responseCode);
 
-failure:
-    if (hSession)
-        WinHttpCloseHandle(hSession);
-    if (hConnect)
-        WinHttpCloseHandle(hConnect);
-    if (hRequest)
-        WinHttpCloseHandle(hRequest);
+	if (CURLE_OK != return_code)
+	{
+		Log::writeError(LOG_RTSPSERV, 1, "curl_easy_getinfo() failed: %s\n", curl_easy_strerror(return_code));
+		*responseCode = -1;
+		curl_easy_cleanup(curl);
+		return result;
+	}
 
+	if (*responseCode == 200)
+	{
+		if (!RetData.empty())
+			result = Asic2WChar(RetData).c_str();
+	}
+
+	curl_easy_cleanup(curl);
     return result;
 }
 

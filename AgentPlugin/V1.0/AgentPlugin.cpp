@@ -237,7 +237,6 @@ bool AgentSource::IsFieldSignal() const
 	return false;
 }
 
-
 struct AreaData
 {
 	String GlobalName;

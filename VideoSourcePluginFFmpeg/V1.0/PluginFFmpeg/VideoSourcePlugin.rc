@@ -1,13 +1,14 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
+#include<Winres.h>
 /////////////////////////////////////////////////////////////////////////////
 // 中文(简体，中国) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 #pragma code_page(936)
-#include "winres.h"
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Dialog
@@ -25,19 +26,19 @@ BEGIN
     RTEXT           "Plugins.VideoSource.Deinterlacing",IDC_DEINTERLACING,364,49,8,8,NOT WS_VISIBLE
     COMBOBOX        IDC_DEINTERLACING,360,4,16,12,CBS_DROPDOWNLIST | CBS_HASSTRINGS | NOT WS_VISIBLE
     CONTROL         "Plugins.VideoSource.AudioOutputToStream",1018,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE | WS_GROUP | WS_TABSTOP,379,5,10,8
-    CONTROL         "Plugins.VideoSource.AudioOutputToDevice",1019,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE | WS_TABSTOP,358,20,26,8
+    CONTROL         "Plugins.VideoSource.AudioOutputToDevice",1019,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE | WS_TABSTOP,252,5,26,8
     COMBOBOX        IDC_AUDIO_OUTPUT_TYPE,341,7,16,12,CBS_DROPDOWNLIST | CBS_HASSTRINGS | NOT WS_VISIBLE | WS_DISABLED
     COMBOBOX        IDC_AUDIO_OUTPUT_DEVICE,385,42,16,30,CBS_DROPDOWNLIST | CBS_HASSTRINGS | NOT WS_VISIBLE | WS_DISABLED
     LTEXT           "Plugins.VideoSource.AudioOutputType",IDC_AUDIO_OUTPUT_TYPE,354,47,8,8,NOT WS_VISIBLE
-    LTEXT           "Plugins.VideoSource.AudioOutputDevice",IDC_AUDIO_OUTPUT_DEVICE,394,28,8,40,NOT WS_VISIBLE
+    LTEXT           "Plugins.VideoSource.AudioOutputDevice",IDC_AUDIO_OUTPUT_DEVICE,394,27,8,40,NOT WS_VISIBLE
     CONTROL         "",IDC_PLAYLIST,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,27,43,360,125,WS_EX_ACCEPTFILES | WS_EX_LEFTSCROLLBAR
-    PUSHBUTTON      "添加视频",1023,11,17,56,20,BS_BITMAP
+    PUSHBUTTON      "添加视频",1023,27,17,56,20,BS_BITMAP
     CONTROL         "",1028,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,181,9,8,WS_EX_RIGHT
-    PUSHBUTTON      "移除视频",1030,92,17,56,20,BS_BITMAP
+    PUSHBUTTON      "移除视频",1030,129,17,56,20,BS_BITMAP
     CONTROL         "Plugins.VideoSource.ApplyVideoFilter",1000,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,386,5,19,8
-    PUSHBUTTON      "画面设置",40005,335,17,56,20
-    PUSHBUTTON      "上移",IDC_UPITEM,173,17,56,20,BS_BITMAP
-    PUSHBUTTON      "下移",IDC_DOWNITEM,254,17,56,20,BS_BITMAP
+    PUSHBUTTON      "画面设置",40005,297,2,27,11,NOT WS_VISIBLE
+    PUSHBUTTON      "上移",IDC_UPITEM,230,17,56,20,BS_BITMAP
+    PUSHBUTTON      "下移",IDC_DOWNITEM,332,17,56,20,BS_BITMAP
     LTEXT           "列表循环播放",IDC_STATIC8,37,183,49,8
     CONTROL         "",ID_SENCECHANGEBEGINPLAY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,196,9,8,WS_EX_RIGHT
     LTEXT           "场景切换从头播放",IDC_STATIC9,35,197,74,8
@@ -147,7 +148,7 @@ BEGIN
         VERTGUIDE, 310
         VERTGUIDE, 353
         BOTTOMMARGIN, 228
-        HORZGUIDE, 28
+        HORZGUIDE, 27
         HORZGUIDE, 49
         HORZGUIDE, 72
         HORZGUIDE, 89

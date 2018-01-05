@@ -304,7 +304,7 @@ bool CMultimediaRender::SetVideoRender(HWND Hwnd,const Vect2 &pos, const Vect2 &
 	m_size = size;
 	m_lock.UnLock();
 	m_hwnd = Hwnd;
-	bReadyToDraw = true;
+	bReadyToDraw = Hwnd != NULL;
 	return true;
 }
 

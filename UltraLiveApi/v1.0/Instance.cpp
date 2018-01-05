@@ -520,6 +520,7 @@ void CInstanceProcess::CreateStream(const Value& Jvalue, VideoArea *Area, uint64
 				}
 				MultiRender->SetVideoRender(RenderHwnd,Vect2(0, 0), Vect2(Rect.right, Rect.bottom));
 			}
+		
 			InVideoStruct.bGlobalStream = true;
 
 			VideoStream->RegisterDataCallBack(this, StreamCallBack);
@@ -1934,7 +1935,8 @@ void CInstanceProcess::SetHwnd(uint64_t hwnd)
 
 void CInstanceProcess::ClearVideo(bool bRemoveDelay, bool bCut)
 {
-	std::vector<IBaseVideo *> vAgentList;
+	std::vector<IBaseVideo *> vAgentListLocal;
+	//std::vector<shared_ptr<IBaseVideo>> vAgentList;
 	EnterCriticalSection(&VideoSection);
 	for (UINT i = 0; i < m_VideoList.Num(); ++i)
 	{
@@ -1974,18 +1976,27 @@ void CInstanceProcess::ClearVideo(bool bRemoveDelay, bool bCut)
 
 					if (BaseVideo)
 					{
-						if (bRemoveDelay && bCut)
+						//为了区域占位源不影响PVW切换做的更改
+// 						if (IsLiveInstance)
+// 						{
+// 							vAgentList.push_back(Video.VideoStream);
+// 						}
+// 						else
 						{
-							vAgentList.push_back(BaseVideo);
+							if (bRemoveDelay && bCut)
+							{
+								vAgentListLocal.push_back(BaseVideo);
+							}
+							else if (m_VideoListTransForm.Num() == 0 && !bCut)
+							{
+								vAgentListLocal.push_back(BaseVideo);
+							}
+							else
+							{
+								BaseVideo->GlobalSourceLeaveScene();
+							}
 						}
-						else if (m_VideoListTransForm.Num() == 0 && !bCut)
-						{
-							vAgentList.push_back(BaseVideo);
-						}
-						else
-						{
-							BaseVideo->GlobalSourceLeaveScene();
-						}
+
 					}
 				}
 			}
@@ -2048,9 +2059,12 @@ void CInstanceProcess::ClearVideo(bool bRemoveDelay, bool bCut)
 	LeaveCriticalSection(&VideoSection);
 
 	//要在m_VideoList.Clear()之后进行
-	for (auto Video : vAgentList)
+	//if (!IsLiveInstance)
 	{
-		Video->GlobalSourceLeaveScene();
+		for (auto Video : vAgentListLocal)
+		{
+			Video->GlobalSourceLeaveScene();
+		}
 	}
 	
 }

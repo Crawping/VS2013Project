@@ -44,6 +44,7 @@ class DAudioSource : public IBaseAudio
 	bool          bSameDevice;
 	QWORD         lastTimestamp;
 	bool          bLiveInstance;
+	float         fVolume;
 
 protected:
     virtual bool GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp);
@@ -56,11 +57,12 @@ public:
     bool Initialize(DSource *parent);
 	~DAudioSource();
 
-    void ReceiveAudio(LPBYTE lpData, UINT dataLength,float volume);
+    void ReceiveAudio(LPBYTE lpData, UINT dataLength,bool bCanPlay);
 
     void FlushSamples();
 
     inline void SetAudioOffset(int offset) {this->offset = offset; SetTimeOffset(offset);}
+	virtual void UpdateSettings(Value &JsonParam);
 
 	virtual void SetLiveInstance(bool bLiveInstance);
 	virtual bool IsNeedRemove() const;
@@ -150,5 +152,7 @@ public:
 	virtual bool GetHasPreProcess() const;
 	virtual void SetCanEnterScene(bool bCanEnter);
 	virtual bool CanEnterScene() const;
+	virtual void RegisterDataCallBack(void *Context, DataCallBack pCb);
+	virtual void UnRegisterDataCallBack(void *Context);
 };
 

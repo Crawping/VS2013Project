@@ -1267,8 +1267,12 @@ void CInstanceProcess::SetPlayPreAudio(uint64_t iStreamID, bool *bRet)
 		Log::writeError(LOG_RTSPSERV, 1, "LiveSDK_Log:%s Invoke end! StreamId = %llu", __FUNCTION__, iStreamID);
 		BUTEL_THORWERROR("没有找到或该流不是视频流,StreamID为 %llu", iStreamID);
 	}
-
-	*bRet = MultiRender->SetAudioRender();
+	if (MultiRender)
+		*bRet = MultiRender->SetAudioRender();
+	else
+	{
+		*bRet = false;
+	}
 
 	Log::writeMessage(LOG_RTSPSERV, 1, "LiveSDK_Log:%s Invoke end! PlayAudio = %s", __FUNCTION__, *bRet ? "true" : "false");
 }

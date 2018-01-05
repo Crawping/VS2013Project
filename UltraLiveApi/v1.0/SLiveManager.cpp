@@ -1448,6 +1448,11 @@ int CSLiveManager::SLiveAddStream(uint64_t iIntanceID, const char* cParamJson, V
 			OSEnterMutex(SharedDevice::HLock);
 			try
 			{
+				//音频捕捉设备也要有小预览(光音频)
+				if (0 == strcmp(Jvalue["ClassName"].asString().c_str(), "DSource"))
+				{
+					Process->bNoPreView = false;
+				}
 				Process->CreateStream(Jvalue, Area, StreamID1, StreamID2);
 			}
 			catch (CErrorBase& e)
@@ -3079,12 +3084,44 @@ void CSLiveManager::ProcessSwitch(CInstanceProcess *InstanceS, CInstanceProcess 
 		{
 			if (type == Cut)
 			{
-				EnterCriticalSection(&InstanceD->VideoSection);
-				InstanceD->m_VideoList.SetSize(InstanceD->m_VideoList.Num() + 1);
-				VideoStruct &VS = InstanceD->m_VideoList[InstanceD->m_VideoList.Num() - 1];
-				VS = VSTem;
-				VS.bSelect = false;
-				LeaveCriticalSection(&InstanceD->VideoSection);
+// 				if (strcmp(VSTem.VideoStream->GainClassName(), "AgentSource") == 0)
+// 				{
+// 					//区域占位源重新生成一个
+// 					IBaseVideo *AgentSource = dynamic_cast<IBaseVideo*>(CreatStreamObject("AgentSource"));
+// 					if (AgentSource)
+// 					{
+// 						AgentSource->Init(*VSTem.Config);
+// 						VideoStruct VSAgent;
+// 
+// 						VSAgent.bRender = true;
+// 						VSAgent.AudioStream = VSTem.AudioStream;
+// 						VSAgent.bGlobalStream = VSTem.bGlobalStream;
+// 						VSAgent.bScale = VSTem.bScale;
+// 						VSAgent.Config = VSTem.Config;
+// 						VSAgent.Crop = VSTem.Crop;
+// 						VSAgent.pos = VSTem.pos;
+// 						VSAgent.size = VSTem.size;
+// 						VSAgent.VideoStream = shared_ptr<IBaseVideo>(AgentSource);
+// 
+// 						EnterCriticalSection(&InstanceD->VideoSection);
+// 						InstanceD->m_VideoList.SetSize(InstanceD->m_VideoList.Num() + 1);
+// 						VideoStruct &VS = InstanceD->m_VideoList[InstanceD->m_VideoList.Num() - 1];
+// 						VS = VSAgent;
+// 						VS.bSelect = false;
+// 						LeaveCriticalSection(&InstanceD->VideoSection);
+// 
+// 						VSAgent.VideoStream->GlobalSourceEnterScene();
+// 					}
+// 				}
+// 				else
+				{
+					EnterCriticalSection(&InstanceD->VideoSection);
+					InstanceD->m_VideoList.SetSize(InstanceD->m_VideoList.Num() + 1);
+					VideoStruct &VS = InstanceD->m_VideoList[InstanceD->m_VideoList.Num() - 1];
+					VS = VSTem;
+					VS.bSelect = false;
+					LeaveCriticalSection(&InstanceD->VideoSection);
+				}
 			}
 			else
 			{

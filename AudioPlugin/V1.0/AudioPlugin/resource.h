@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by AuidoPlugin.rc
+// Microsoft Visual C++ 生成的包含文件。
+// 供 AudioPlugin.rc 使用
 //
 #define IDD_CONFIG                      101
 #define IDC_DEVICELIST                  1001

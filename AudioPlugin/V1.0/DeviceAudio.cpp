@@ -30,6 +30,7 @@ DAudioSource::DAudioSource()
 	m_pAudioWaveOut = NULL;
 	m_pSecWaveOut = NULL;
 	bLiveInstance = false;
+	fVolume = 1.0f;
 }
 
 bool DAudioSource::GetNextBuffer(void **buffer, UINT *numFrames, QWORD *timestamp)
@@ -201,53 +202,82 @@ DAudioSource::~DAudioSource()
 }
 
 
-void DAudioSource::ReceiveAudio(LPBYTE lpData, UINT dataLength, float volume)
+void DAudioSource::ReceiveAudio(LPBYTE lpData, UINT dataLength, bool bCanPlay)
 {
     if(lpData)
     {
-		bool bPlayLive = false;
-		if (bLiveInstance)
+		if (fVolume != 1.0f)
 		{
+			short *Tem = (short*)lpData;
+			for (int i = 0; i < dataLength; i += 2)
+			{
+				long sVolume = Tem[i / 2];
+
+				sVolume *= fVolume;
+
+				if (sVolume > 0x7fff)
+				{
+					sVolume = 0x7fff;
+				}
+				else if (sVolume < -0x8000)
+				{
+					sVolume = -0x8000;
+				}
+
+				Tem[i / 2] = (short)sVolume;
+			}
+		}
+		if (bCanPlay)
+		{
+			bool bPlayLive = false;
+			if (bLiveInstance)
+			{
+				OSEnterMutex(hAudioMutex);
+				sampleBuffer.AppendArray(lpData, dataLength);
+				OSLeaveMutex(hAudioMutex);
+				bPlayLive = m_bPlayPcmLive;
+			}
+			else
+			{
+				OSEnterMutex(hAudioMutex);
+				sampleBuffer.RemoveRange(0, sampleBuffer.Num());
+				OSLeaveMutex(hAudioMutex);
+			}
+
+			int Len = dataLength;
+			char *OutBuffer;
+			CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer);
+
 			OSEnterMutex(hAudioMutex);
-			sampleBuffer.AppendArray(lpData, dataLength);
+			
+			if (m_pAudioWaveOut && (m_bPlayPcmLocal || bPlayLive))
+			{
+				m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len);
+
+				if (!bSameDevice && bProjector && m_pSecWaveOut)
+					m_pSecWaveOut->push_pcm_data((char*)OutBuffer, Len);
+
+			}
+			else if (bProjector)
+			{
+				if (bSameDevice && m_pAudioWaveOut)
+				{
+					m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len);
+				}
+				else if (m_pSecWaveOut)
+				{
+					m_pSecWaveOut->push_pcm_data((char*)OutBuffer, Len);
+				}
+			}
 			OSLeaveMutex(hAudioMutex);
-			bPlayLive = m_bPlayPcmLive;
 		}
 		else
 		{
-			OSEnterMutex(hAudioMutex);
-			sampleBuffer.RemoveRange(0, sampleBuffer.Num());
-			OSLeaveMutex(hAudioMutex);
-		}
-
-		OSEnterMutex(hAudioMutex);
-		int Len = dataLength;
-		if (m_pAudioWaveOut && (m_bPlayPcmLocal || bPlayLive))
-		{
+			int Len = dataLength;
 			char *OutBuffer;
-			CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer);
-
-			m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len);
-
-			if (!bSameDevice && bProjector && m_pSecWaveOut)
-				m_pSecWaveOut->push_pcm_data((char*)OutBuffer, Len);
-
+			CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer,true);
 		}
-		else if (bProjector)
-		{
-			char *OutBuffer;
-			CaculateVolume((LPVOID)lpData, Len, (void**)&OutBuffer);
-
-			if (bSameDevice && m_pAudioWaveOut)
-			{
-				m_pAudioWaveOut->push_pcm_data((char*)OutBuffer, Len);
-			}
-			else if (m_pSecWaveOut)
-			{
-				m_pSecWaveOut->push_pcm_data((char*)OutBuffer, Len);
-			}
-		}
-		OSLeaveMutex(hAudioMutex);
+		
     }
 }
 
@@ -273,6 +303,11 @@ void DAudioSource::SetLiveInstance(bool bLiveInstance)
 bool DAudioSource::IsNeedRemove() const
 {
 	return !bLiveInstance && !audioSegments.Num();
+}
+
+void DAudioSource::UpdateSettings(Value &JsonParam)
+{
+	fVolume = JsonParam["Volume"].asDouble();
 }
 
 void DAudioSource::OnAudioDeviceChanged(const String &MonitorDevices, const String &SecMonitor)

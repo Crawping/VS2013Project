@@ -82,8 +82,8 @@ bool DSource::Init(Value &data)
 
     this->data = data;
 	fNewVol = 1.0f;
-	if (!data["volume"].isNull())
-		fNewVol = data["volume"].asDouble();
+	//if (!data["volume"].isNull())
+	//	fNewVol = data["volume"].asDouble();
 	UpdateSettings(data);
     Log(TEXT("Using directshow input"));
 
@@ -470,7 +470,7 @@ void DSource::GlobalSourceEnterScene()
 	OSEnterMutex(hSampleMutex);
 	if (audioOut) {
 		audioOut->Initialize(this);
-        audioOut->SetVolume(sourceVolume);
+        audioOut->SetVolume(1.0f);
     }
 	OSLeaveMutex(hSampleMutex);
 }
@@ -497,8 +497,24 @@ void DSource::ReceiveMediaSample(IMediaSample *sample, bool bAudio)
 		m_qwrdAudioTime = GetQPCMS();
 
 		long nlen = sample->GetActualDataLength();
-		if (audioOut && bCapturing && enteredSceneCount)
-			audioOut->ReceiveAudio(pointer, nlen,fNewVol);
+		if (audioOut && bCapturing)
+			audioOut->ReceiveAudio(pointer, nlen, enteredSceneCount != 0);
+
+
+		CSampleData Audio;
+		Audio.bAudio = true;
+		Audio.lpData = pointer;
+		Audio.dataLength = nlen;
+
+		for (int i = 0; i < m_ListCallBack.Num(); ++i)
+		{
+			__DataCallBack &OneCallBack = m_ListCallBack[i];
+			Audio.pAudioFormat = (void*)&audioFormat;
+			if (OneCallBack.CallBack)
+				OneCallBack.CallBack(OneCallBack.Context, &Audio);
+		}
+
+		Audio.lpData = NULL;
 
 		OSLeaveMutex(hSampleMutex);
 	}
@@ -648,11 +664,11 @@ void DSource::SetFloat(CTSTR lpName, float fValue)
     if(!bCapturing)
         return;
 
-    if(scmpi(lpName, TEXT("volume")) == 0)
-    {
-        fNewVol = fValue;
-        bRequestVolume = true;
-    }
+//     if(scmpi(lpName, TEXT("volume")) == 0)
+//     {
+//         fNewVol = fValue;
+//         bRequestVolume = true;
+//     }
 }
 
 void DSource::SetHasPreProcess(bool bHasPre)
@@ -685,4 +701,30 @@ IBaseAudio * DSource::GetAudioRender()
 {
 	return audioOut;
 }
+
+void DSource::RegisterDataCallBack(void *Context, DataCallBack pCb)
+{
+	__DataCallBack DataBack;
+	DataBack.Context = Context;
+	DataBack.CallBack = pCb;
+	OSEnterMutex(hSampleMutex);
+	m_ListCallBack.Add(DataBack);
+	OSLeaveMutex(hSampleMutex);
+}
+
+void DSource::UnRegisterDataCallBack(void *Context)
+{
+	OSEnterMutex(hSampleMutex);
+	for (int i = 0; i < m_ListCallBack.Num(); ++i)
+	{
+		__DataCallBack &OneCallBack = m_ListCallBack[i];
+		if (OneCallBack.Context == Context)
+		{
+			m_ListCallBack.Remove(i);
+			break;
+		}
+	}
+	OSLeaveMutex(hSampleMutex);
+}
+
 
