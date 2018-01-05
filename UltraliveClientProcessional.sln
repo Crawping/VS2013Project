@@ -34,6 +34,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VideoLivePlugin", "VideoLiv
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SDIOutput", "SDIOutput\v1.0\SDIOutput\SDIOutput.vcxproj", "{3B4E2C08-4F28-4999-A8AF-64ED209F2D7F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NvEncode", "NvEncode\NvEncode\NvEncode.vcxproj", "{1C22F242-9E1B-447F-B299-44750DF412D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -196,6 +198,18 @@ Global
 		{3B4E2C08-4F28-4999-A8AF-64ED209F2D7F}.Release|Win32.Build.0 = Release|Win32
 		{3B4E2C08-4F28-4999-A8AF-64ED209F2D7F}.Release|x64.ActiveCfg = Release|X64
 		{3B4E2C08-4F28-4999-A8AF-64ED209F2D7F}.Release|x64.Build.0 = Release|X64
+		{1C22F242-9E1B-447F-B299-44750DF412D9}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{1C22F242-9E1B-447F-B299-44750DF412D9}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{1C22F242-9E1B-447F-B299-44750DF412D9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1C22F242-9E1B-447F-B299-44750DF412D9}.Debug|Win32.Build.0 = Debug|Win32
+		{1C22F242-9E1B-447F-B299-44750DF412D9}.Debug|x64.ActiveCfg = Debug|x64
+		{1C22F242-9E1B-447F-B299-44750DF412D9}.Debug|x64.Build.0 = Debug|x64
+		{1C22F242-9E1B-447F-B299-44750DF412D9}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{1C22F242-9E1B-447F-B299-44750DF412D9}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{1C22F242-9E1B-447F-B299-44750DF412D9}.Release|Win32.ActiveCfg = Release|Win32
+		{1C22F242-9E1B-447F-B299-44750DF412D9}.Release|Win32.Build.0 = Release|Win32
+		{1C22F242-9E1B-447F-B299-44750DF412D9}.Release|x64.ActiveCfg = Release|x64
+		{1C22F242-9E1B-447F-B299-44750DF412D9}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

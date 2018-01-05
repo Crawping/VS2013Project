@@ -236,6 +236,9 @@
     <ClCompile Include="..\D3DResize.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\Encoder_Nvidia.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="UltraliveApi.rc">

@@ -1093,7 +1093,7 @@ void CInstanceProcess::RecordCallBack(void *Context, CSampleData* Data)
 		if (Data)
 		{
 			Process->bCanRecord = (*Data->UserData)["UseRecorder"].asInt() == 1;
-			if (G_LiveInstance && G_LiveInstance->bStartLive && Data->colorType == DeviceOutputType_I420)
+			if (G_LiveInstance && G_LiveInstance->bStartLive && (Data->colorType == DeviceOutputType_I420 || Data->colorType == DeviceOutputType_YV12))
 					Process->ProcessRecord(Data);
 			else
 			{
