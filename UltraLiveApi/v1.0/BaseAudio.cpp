@@ -1006,8 +1006,7 @@ void IBaseAudio::CaculateVolume(LPVOID pBuffer, int& numAudioFrames, void **OutB
 			CalculateVolumeLevelsShort(rightaudioData.Array(), numAudioFrames / 2, RightDb);
 		}
 
-
-		AudioDbCB((uint64_t)this, LeftDb, RightDb);
+		AudioDbCB((uint64_t)this, toDB(LeftDb), toDB(RightDb));
 
 		audioFramesUpdate = 0;
 	}
