@@ -1269,6 +1269,9 @@ void VideoLiveSource::Monitor()
 				Last_inf_Audio = NULL;
 			}
 
+			if (m_pDemandMediaAudio)
+				m_pDemandMediaAudio->ResetAudioDB();
+
 			config->Reload();
 			m_iVolume = config->volume;
 			m_nWarnTime = config->WarnTime;
@@ -1623,6 +1626,10 @@ bool VideoLiveSource::IsFieldSignal() const
 bool VideoLiveSource::GetStreamPos(UINT& Pos)
 {
 	Pos = m_pos;
+
+	if (Pos == 0 && m_pDemandMediaAudio)
+		m_pDemandMediaAudio->ResetAudioDB();
+		
 	return true;
 }
 

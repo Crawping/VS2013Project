@@ -910,6 +910,9 @@ void VideoSource::UpdateSettings(Value &JsonParam)
 	m_AudioAACBuffer.clear();
 	LeaveCriticalSection(&AudioDataLock);
 
+	if (m_pDemandMediaAudio)
+		m_pDemandMediaAudio->ResetAudioDB();
+
 	m_FrameWidth = m_width;
 	m_FrameHeight = m_height;
 	m_FrameLines = 0;
@@ -1044,6 +1047,9 @@ bool VideoSource::ChangePos()
 		m_AudioAACBuffer.clear();
 		LeaveCriticalSection(&AudioDataLock);
 
+		if (m_pDemandMediaAudio)
+			m_pDemandMediaAudio->ResetAudioDB();
+
 		mp_start(HMediaProcess);    //开始获取数据
 		LeaveCriticalSection(&DataLock);
 		m_bPlay = true;
@@ -1142,6 +1148,9 @@ bool VideoSource::ChangeReset()
 	}
 	m_AudioAACBuffer.clear();
 	LeaveCriticalSection(&AudioDataLock);
+
+	if (m_pDemandMediaAudio)
+		m_pDemandMediaAudio->ResetAudioDB();
 
 	mp_start(HMediaProcess);    //开始获取数据
 
@@ -1446,6 +1455,9 @@ Label:
 	m_AudioAACBuffer.clear();
 	LeaveCriticalSection(&AudioDataLock);
 
+	if (m_pDemandMediaAudio)
+		m_pDemandMediaAudio->ResetAudioDB();
+
 	m_FrameWidth = m_width;
 	m_FrameHeight = m_height;
 	m_FrameLines = 0;
@@ -1615,6 +1627,9 @@ bool VideoSource::ChangeNext_API()
 	}
 	m_AudioAACBuffer.clear();
 	LeaveCriticalSection(&AudioDataLock);
+
+	if (m_pDemandMediaAudio)
+		m_pDemandMediaAudio->ResetAudioDB();
 
 	m_FrameWidth = m_width;
 	m_FrameHeight = m_height;
@@ -1811,6 +1826,9 @@ void VideoSource::SetDirectPlay(const String DirectPlayFile)
 	}
 	m_AudioAACBuffer.clear();
 	LeaveCriticalSection(&AudioDataLock);
+
+	if (m_pDemandMediaAudio)
+		m_pDemandMediaAudio->ResetAudioDB();
 
 	m_FrameWidth = m_width;
 	m_FrameHeight = m_height;
@@ -2380,6 +2398,9 @@ bool VideoSource::ChangePrev()
 	m_AudioAACBuffer.clear();
 	LeaveCriticalSection(&AudioDataLock);
 
+	if (m_pDemandMediaAudio)
+		m_pDemandMediaAudio->ResetAudioDB();
+
 	m_FrameWidth = m_width;
 	m_FrameHeight = m_height;
 	m_FrameLines = 0;
@@ -2481,6 +2502,18 @@ bool VideoSource::GetStreamInfo(Value &JsonInfo)
 	JsonInfo["IsListLoop"] = config->isPlaylistLooping;
 	JsonInfo["IsFileLoop"] = config->isFileLoop;
 	JsonInfo["MediaStatus"] = m_MediaState;
+
+	if (m_MediaState != MediaPalying /*&& bCanResetAudio*/)
+	{
+		if (m_pDemandMediaAudio)
+			m_pDemandMediaAudio->ResetAudioDB();
+
+		bCanResetAudio = false;
+	}
+//	else if (m_MediaState == MediaPalying)
+//	{
+//		bCanResetAudio = true;
+//	}
 
 	//Log::writeMessage(LOG_RTSPSERV, 1, "FUNC : %s, LINE:%d,  获取文件总时长 m_uDuration = %d.", String(__FUNCTION__).CreateUTF8String(), __LINE__, m_mediaDuration);
 	return true;

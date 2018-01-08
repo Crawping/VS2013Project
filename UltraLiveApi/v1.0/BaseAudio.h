@@ -66,6 +66,7 @@ public:
 		bool  bPlayPcmLocal, bool  bPlayPcmLive, float quotietyVolume, bool Projector);
 	void CaculateVolume(LPVOID pBuffer, int& numAudioFrames, void **OutBuffer,bool bOnlyCallBack = false);
 	void VolumeCaculate(char* buf, UINT32 size, double vol);
+	void ResetAudioDB();
 
 protected:
 	void InitAudioData(bool bFloat, UINT channels, UINT samplesPerSec, UINT bitsPerSample, UINT blockSize, DWORD channelMask, bool bCheck = false);

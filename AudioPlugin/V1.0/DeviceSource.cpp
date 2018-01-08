@@ -592,6 +592,11 @@ DWORD DSource::CheckDevice()
 				SleepTime = 3000;
 				hr = m_pEvent->GetEventHandle((OAEVENT*)&hEventArray[0]);
 			}
+			else if (bNeedCheck && audioOut)
+			{
+				audioOut->ResetAudioDB();
+			}
+
 		}
 		else if ((WAIT_OBJECT_0 + 1)== result)
 		{
@@ -622,6 +627,9 @@ void DSource::UpdateSettings(Value &data)
 	// 创建检测线程
 	ResetEvent(m_hCheckExitEvent);
 	hThreadCheckDevice = OSCreateThread((XTHREAD)CheckDeviceThread, this);
+
+	if (audioOut)
+		audioOut->ResetAudioDB();
 }
 
 bool DSource::ReStartCaptrue()

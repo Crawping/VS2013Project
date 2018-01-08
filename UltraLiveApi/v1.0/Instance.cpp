@@ -1760,10 +1760,6 @@ void CInstanceProcess::StopLive(bool bUI)
 
 		bStartLive = false;
 		bLiveInstanceRecordOnly = false;
-		if (LiveParam.TipsCb)
-		{
-			LiveParam.TipsCb(-100, " ");
-		}
 		Log::writeMessage(LOG_RTSPSERV, 1, "LiveSDK_Log:%s Invoke end!", __FUNCTION__);
 		return;
 	}
@@ -1821,6 +1817,12 @@ void CInstanceProcess::StopLive(bool bUI)
 	bufferedVideo_back.Clear();
 	bufferedTimes.Clear();
 	bufferedTimes_back.Clear();
+
+	if (LiveParam.TipsCb)
+	{
+		LiveParam.TipsCb(-100, " ");
+	}
+
 	Log::writeMessage(LOG_RTSPSERV, 1, "LiveSDK_Log:%s Invoke end!", __FUNCTION__);
 }
 

@@ -709,7 +709,7 @@ void PipeVideo::ReceiveMediaSample(ISampleData *sample, bool bAudio)
 	OSEnterMutex(hListMutex);
 	if (m_ListCallBack.Num())
 	{
-		if (!bAudio)//音频
+		if (!bAudio)
 		{
 			CSampleData  VideoSample;;
 
@@ -728,7 +728,7 @@ void PipeVideo::ReceiveMediaSample(ISampleData *sample, bool bAudio)
 			}
 			VideoSample.lpData = NULL;
 		}
-		else
+		else //音频
 		{
 			CSampleData  audioSample;
 			audioSample.bAudio = true;
@@ -743,6 +743,8 @@ void PipeVideo::ReceiveMediaSample(ISampleData *sample, bool bAudio)
 				OneBack.CallBack(OneBack.Context, &audioSample);
 			}
 			audioSample.lpData = NULL;
+
+			m_qwrdAudioTime = GetQPCMS();
 		}
 	}
 
@@ -4929,6 +4931,7 @@ bool PipeVideo::IsFieldSignal() const
 DWORD PipeVideo::AudioThread(LPVOID Param)
 {
 	PipeVideo *Video = (PipeVideo*)Param;
+	Video->m_qwrdAudioTime = GetQPCMS();
 	while (Video->bThreadRuning)
 	{
 		ListParam Param = { 0 };
@@ -4963,6 +4966,22 @@ DWORD PipeVideo::AudioThread(LPVOID Param)
 			}
 
 			OSLeaveMutex(Video->hAudioMutex);
+		}
+
+		//检测是否要重置音频
+
+		if (GetQPCMS() - Video->m_qwrdAudioTime > 1000)
+		{
+			OSEnterMutex(Video->hAudioMutex);
+
+			if (Video->audioOut)
+			{
+				Video->audioOut->ResetAudioDB();
+			}
+
+			OSLeaveMutex(Video->hAudioMutex);
+
+			Video->m_qwrdAudioTime = GetQPCMS();
 		}
 
 		Sleep(10);

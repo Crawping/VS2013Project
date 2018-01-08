@@ -277,6 +277,7 @@ class PipeVideo : public IBaseVideo
 	bool bThreadRuning;
 
 	D3DAPI *D3DRender;
+	QWORD  m_qwrdAudioTime = 0;
 
 public:
 	bool Init(Value &data);

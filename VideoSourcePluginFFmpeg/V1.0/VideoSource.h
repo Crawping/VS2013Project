@@ -70,6 +70,7 @@ private:
 	CSampleData      *latestVideoSample;
 	std::list<CSampleData*> m_AudioAACBuffer;
 	CDemandMediaAudio *m_pDemandMediaAudio;
+	bool  bCanResetAudio = true;
 	BYTE *m_convertShader = NULL;
 	//bool m_bGlobal;
 	bool m_stop = false;

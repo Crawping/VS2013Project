@@ -1143,3 +1143,9 @@ float IBaseAudio::toDB(float RMS)
 	return db;
 }
 
+void IBaseAudio::ResetAudioDB()
+{
+	if (AudioDbCB)
+		AudioDbCB((uint64_t)this, -96.0f, -96.0f);
+}
+
