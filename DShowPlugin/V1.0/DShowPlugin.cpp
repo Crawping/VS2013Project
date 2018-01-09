@@ -1208,6 +1208,27 @@ INT CALLBACK _BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM pDa
 	}
 	return 0;
 }
+bool IsSupportRecord()
+{
+	DeviceOutputs OutPuts;
+	GetDisplayDevices(OutPuts);
+
+	bool bSupport = false;
+	if (OutPuts.devices.Num() > 0)
+	{
+		for (int i = 0; i < OutPuts.devices.Num(); ++i)
+		{
+			if (sstri((const TCHAR*)OutPuts.devices[i].strDevice.Array(), (const TCHAR*)L"NVIDIA") != NULL)
+			{
+				bSupport = true;
+				break;
+			}
+		}
+	}
+
+	return bSupport;
+}
+
 INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static bool bSelectingColor = false;
@@ -1538,6 +1559,13 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 FillOutListOfDevices(hwndDeviceList, CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
 
 				bool bUseRecorder = configData->data["UseRecorder"].asInt() == 1;
+				bool bSupportRecord = IsSupportRecord();
+
+				if (!bSupportRecord)
+				{
+					bUseRecorder = false;
+					EnableWindow(GetDlgItem(hwnd, IDC_STARTRECORD), FALSE);
+				}
 
 				SendMessage(GetDlgItem(hwnd, IDC_STARTRECORD), BM_SETCHECK, bUseRecorder ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -1931,6 +1959,28 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 						EnableWindow(GetDlgItem(hwnd, IDC_RECORDBITRATE), bStartRecorde);
 						EnableWindow(GetDlgItem(hwnd, IDC_RECORDPATH), bStartRecorde);
 						EnableWindow(GetDlgItem(hwnd, IDC_BROSE), bStartRecorde);
+
+						UINT preferredType = -1;
+						int id = (int)SendMessage(GetDlgItem(hwnd, IDC_PREFERREDOUTPUT), CB_GETCURSEL, 0, 0);
+						if (id != -1)
+							preferredType = (UINT)SendMessage(GetDlgItem(hwnd, IDC_PREFERREDOUTPUT), CB_GETITEMDATA, id, 0);
+
+						if (preferredType != VideoOutputType_I420 && preferredType != VideoOutputType_YV12)
+						{
+							if (bStartRecorde)
+							{
+								SendMessage(GetDlgItem(hwnd, IDC_STARTRECORD), BM_SETCHECK, BST_UNCHECKED, 0);
+
+								EnableWindow(GetDlgItem(hwnd, IDC_AUDIOLIST), false);
+								EnableWindow(GetDlgItem(hwnd, IDC_CONFIGAUDIO), false);
+								EnableWindow(GetDlgItem(hwnd, IDC_RECORDBITRATE), false);
+								EnableWindow(GetDlgItem(hwnd, IDC_RECORDPATH), false);
+								EnableWindow(GetDlgItem(hwnd, IDC_BROSE), false);
+
+								BLiveMessageBox(hwnd, PluginStr("DeviceSelection.RecordWarning"), NULL, 0);
+							}
+						}
+
 						break;
 					}
 				case IDC_BROSE:
@@ -2248,11 +2298,18 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 case IDC_USEPREFERREDOUTPUT:
                     {
-                        BOOL bUsePreferredOutput = SendMessage(GetDlgItem(hwnd, IDC_USEPREFERREDOUTPUT), BM_GETCHECK, 0, 0) == BST_CHECKED;
-                        EnableWindow(GetDlgItem(hwnd, IDC_PREFERREDOUTPUT), bUsePreferredOutput);
+                       // BOOL bUsePreferredOutput = SendMessage(GetDlgItem(hwnd, IDC_USEPREFERREDOUTPUT), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                       // EnableWindow(GetDlgItem(hwnd, IDC_PREFERREDOUTPUT), bUsePreferredOutput);
                         break;
                     }
-
+				case IDC_PREFERREDOUTPUT:
+				{
+											if (HIWORD(wParam) == CBN_SELCHANGE)
+											{
+												SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_STARTRECORD, 0), (LPARAM)GetDlgItem(hwnd, IDC_STARTRECORD));
+											}
+											break;
+				}
                 case IDC_REFRESH:
                     {
                         HWND hwndDeviceList = GetDlgItem(hwnd, IDC_DEVICELIST);
@@ -2684,11 +2741,52 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                                     SendMessage(hwndPreferredList, CB_SETCURSEL, id, 0);
 
 									preferredID = id;
+
+									if (wcscmp(EnumToName[(UINT)types[i]], L"I420") && wcscmp(EnumToName[(UINT)types[i]], L"YV12"))
+									{
+										SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_STARTRECORD, 0), (LPARAM)GetDlgItem(hwnd, IDC_STARTRECORD));
+									}
                                 }
                             }
 
-                            if(preferredID == -1)
-                                SendMessage(hwndPreferredList, CB_SETCURSEL, 0, 0);
+							if (preferredID == -1)
+							{
+								bool bFind = false;
+								for (UINT j = 0; j < types.Num(); j++)
+								{
+									CTSTR lpName = EnumToName[(UINT)types[j]];
+									if (wcscmp(lpName, L"I420") == 0)
+									{
+										bFind = true;
+										SendMessage(hwndPreferredList, CB_SETCURSEL, j, 0);
+										break;
+									}
+								}
+
+								if (!bFind)
+								{
+									for (UINT j = 0; j < types.Num(); j++)
+									{
+										CTSTR lpName = EnumToName[(UINT)types[j]];
+										if (wcscmp(lpName, L"YV12") == 0)
+										{
+											bFind = true;
+											SendMessage(hwndPreferredList, CB_SETCURSEL, j, 0);
+											break;
+										}
+									}
+
+									if (!bFind)
+									{
+										SendMessage(hwndPreferredList, CB_SETCURSEL, 0, 0);
+
+										if (wcscmp(EnumToName[(UINT)types[0]], L"I420") && wcscmp(EnumToName[(UINT)types[0]], L"YV12"))
+										{
+											SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_STARTRECORD, 0), (LPARAM)GetDlgItem(hwnd, IDC_STARTRECORD));
+										}
+									}
+								}
+							}
                         }
                     }
                     break;

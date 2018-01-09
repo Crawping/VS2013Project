@@ -56,7 +56,6 @@ public:
 
 	virtual bool isQSV() { return false; }
 
-	virtual int GetBufferedFrames() { if (HasBufferedFrames()) return -1; return 0; }
 	virtual bool HasBufferedFrames() { return false; }
 	virtual bool InitEncoder() { return false; }
 	virtual void GetWH(int& Width, int& Height){};
@@ -66,7 +65,7 @@ VideoEncoder* CreateX264Encoder(int fps, int width, int height, int quality, CTS
 AudioEncoder* CreateAACEncoder(UINT bitRate, UINT SampRate, UINT NumChannel);
 AudioEncoder* CreateMP3Encoder(UINT bitRate, UINT SampRate, UINT NumChannel);
 VideoEncoder* CreateRDX264EncoderNew(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, int ColorT = 0);
-VideoEncoder* CreateNvidiaEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, int ColorT = 0);
+VideoEncoder* CreateNvidiaEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUseDefaultConfig, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseBack, int ColorT = 0);
 AudioEncoder* CreateAACEncoderNew(UINT bitRate, UINT SampRate, UINT NumChannel, UINT BitsPerSample);
 
 #endif // !ENCODER_H

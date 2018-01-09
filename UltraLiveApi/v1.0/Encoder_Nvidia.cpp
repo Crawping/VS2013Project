@@ -95,7 +95,7 @@ protected:
     }
 
 public:
-	CNvidiaEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitrate, int bufferSize, bool bUseCFR, int ColorT)
+	CNvidiaEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUseDefaultConfig, ColorDescription &colorDesc, int maxBitrate, int bufferSize, bool bUseBack, int ColorT)
     {  
 		Log::writeMessage(LOG_RTSPSERV, 1, "CNvidiaEncoder 构造!\n");
 
@@ -108,30 +108,60 @@ public:
 		m_width = width;
 		m_height = height;
 
-// 		String encoderPreset = AppConfig->GetString(TEXT("Video Encoding"), TEXT("nvencoderPreset"), TEXT("hq"));
-// 		LPSTR lpPreset = encoderPreset.CreateUTF8String();
-// 		int numB = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("nvnumB"), 2);
-// 		int gopLength = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("nvgopLength"), 25);
-// 		int rcMode = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("nvrcMode"), 16);
-// 		int pictureStruct = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("nvpictureStruct"), 1);
-// 		int deviceType = AppConfig->GetInt(TEXT("Video Encoding"), TEXT("nvdeviceType"), 1);
-
-// 		m_encodeConfig.encoderPreset = lpPreset;
-// 		m_encodeConfig.numB = numB;
-// 		m_encodeConfig.gopLength = gopLength;
-// 		m_encodeConfig.rcMode = rcMode;
-// 		m_encodeConfig.pictureStruct = pictureStruct;
-// 		m_encodeConfig.deviceType = deviceType; 
-
 		memset(&m_encodeConfig, 0, sizeof(EncodeConfig));
 
 		m_encodeConfig.encoderPreset = "hq";
-		m_encodeConfig.numB = 2;
-		m_encodeConfig.gopLength = 25;
-		m_encodeConfig.rcMode = 16;
+		
+		if (bUseDefaultConfig)
+		{
+			m_encodeConfig.numB = 0;
+			m_encodeConfig.gopLength = fps;
+			m_encodeConfig.rcMode = 16;
+		}
+		else
+		{
+			UINT keyframeInterval = CSLiveManager::GetInstance()->BSParam.LiveSetting.KeyFrame;
+
+			int nBFrameCount = CSLiveManager::GetInstance()->BSParam.LiveSetting.BFrameCount;
+
+			if (bUseBack)
+			{
+				keyframeInterval = CSLiveManager::GetInstance()->BSParam.LiveSetting.KeyFrameSec;
+				nBFrameCount = CSLiveManager::GetInstance()->BSParam.LiveSetting.BFrameCountSec;
+
+				if (keyframeInterval == 0)
+				{
+					keyframeInterval = 1;
+				}
+				if (-1 != nBFrameCount)
+				{
+					m_encodeConfig.numB = nBFrameCount;
+				}
+				
+				m_encodeConfig.gopLength = fps * keyframeInterval;
+				m_encodeConfig.rcMode = CSLiveManager::GetInstance()->BSParam.LiveSetting.bUseCBRSec ? 16 : 32;
+			}
+			else
+			{
+				if (keyframeInterval == 0)
+				{
+					keyframeInterval = 1;
+				}
+
+				if (-1 != nBFrameCount)
+				{
+					m_encodeConfig.numB = nBFrameCount;
+				}
+
+				m_encodeConfig.gopLength = fps * keyframeInterval;
+				m_encodeConfig.rcMode = CSLiveManager::GetInstance()->BSParam.LiveSetting.bUseCBR ? 16 : 32;
+			}
+		
+		}
+	
 		m_encodeConfig.pictureStruct = 1;
 		m_encodeConfig.deviceType = 1;
-		m_encodeConfig.deviceID = 1;
+		m_encodeConfig.deviceID = CSLiveManager::GetInstance()->BSParam.DeviceSetting.AdpterID;
 
 		m_encodeConfig.fps = fps;
 		m_encodeConfig.width = width;
@@ -140,7 +170,18 @@ public:
 		m_encodeConfig.vbvMaxBitrate = maxBitrate * 1000;
 		m_encodeConfig.vbvSize = bufferSize * 1000;
 
-		m_encodeConfig.RealInputFormat = ColorT == 0 ? NV_ENC_BUFFER_FORMAT_YV12 : NV_ENC_BUFFER_FORMAT_NV12;
+		if (ColorT == 0)
+		{
+			m_encodeConfig.RealInputFormat = NV_ENC_BUFFER_FORMAT_YV12;
+		}
+		else if (ColorT == 1)
+		{
+			m_encodeConfig.RealInputFormat = NV_ENC_BUFFER_FORMAT_NV12;
+		}
+		else if (ColorT == 2)
+		{
+			m_encodeConfig.RealInputFormat = NV_ENC_BUFFER_FORMAT_IYUV;
+		}
 		m_encodeConfig.inputFormat = NV_ENC_BUFFER_FORMAT_NV12;
 		m_encodeConfig.codec = 0;
 		m_encodeConfig.qp = 28;
@@ -470,10 +511,10 @@ public:
 	bool IsConstructSuc() const{ return ConstructSuc; }
 };
 
-VideoEncoder* CreateNvidiaEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, int ColorT)
+VideoEncoder* CreateNvidiaEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUseDefaultConfig, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseBack, int ColorT)
 {
 	Log::writeMessage(LOG_RTSPSERV, 1, "调用CreateNvidiaEncoder");
-	CNvidiaEncoder *NvidiaEncoder = new CNvidiaEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, ColorT);
+	CNvidiaEncoder *NvidiaEncoder = new CNvidiaEncoder(fps, width, height, quality, preset, bUseDefaultConfig, colorDesc, maxBitRate, bufferSize, bUseBack, ColorT);
 	if (!NvidiaEncoder->IsConstructSuc())
 	{
 		Log::writeError(LOG_RTSPSERV, 1, "CreateNvidiaEncoder创建失败");

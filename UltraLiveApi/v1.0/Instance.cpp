@@ -412,6 +412,11 @@ void CInstanceProcess::CreateStream(const Value& Jvalue, VideoArea *Area, uint64
 					AS = InAudio;
 					LeaveCriticalSection(&AudioSection);
 				}
+				else if (StreamID2)
+				{
+					*StreamID2 = 0;
+				}
+
 
 				EnterCriticalSection(&VideoSection);
 				m_VideoList.SetSize(m_VideoList.Num() + 1);
@@ -567,6 +572,10 @@ void CInstanceProcess::CreateStream(const Value& Jvalue, VideoArea *Area, uint64
 			AudioStruct &AS = m_AudioList[m_AudioList.Num() - 1];
 			AS = InAudio;
 			LeaveCriticalSection(&AudioSection);
+		}
+		else if (StreamID2)
+		{
+			*StreamID2 = 0;
 		}
 
 		EnterCriticalSection(&VideoSection);
@@ -1166,7 +1175,7 @@ void CInstanceProcess::BulidX264Encoder()
 		{
 			if (LiveParam.LiveSetting.bUseHardEncoderSec)
 			{
-				videoEncoder_back = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX, outputCY, LiveParam.LiveSetting.QualitySec, Asic2WChar(LiveParam.LiveSetting.X264PresetSec).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRateSec, LiveParam.LiveSetting.VideoBitRateSec, false, 1);
+				videoEncoder_back = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX, outputCY, LiveParam.LiveSetting.QualitySec, Asic2WChar(LiveParam.LiveSetting.X264PresetSec).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRateSec, LiveParam.LiveSetting.VideoBitRateSec, true, 1);
 			}
 			else
 			{
@@ -1177,7 +1186,7 @@ void CInstanceProcess::BulidX264Encoder()
 		{
 			if (LiveParam.LiveSetting.bUseHardEncoderSec)
 			{
-				videoEncoder_back = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX_back, outputCY_back, LiveParam.LiveSetting.QualitySec, Asic2WChar(LiveParam.LiveSetting.X264PresetSec).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRateSec, LiveParam.LiveSetting.VideoBitRateSec, false, 1);
+				videoEncoder_back = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX_back, outputCY_back, LiveParam.LiveSetting.QualitySec, Asic2WChar(LiveParam.LiveSetting.X264PresetSec).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRateSec, LiveParam.LiveSetting.VideoBitRateSec, true, 1);
 			}
 			else
 			{
@@ -2426,7 +2435,7 @@ void CInstanceProcess::ProcessRecord(CSampleData *Data)
 					fileStream.reset();
 
 				RecordFPS = 10000000.0 / (*Data->UserData)["frameInterval"].asUInt();
-				videoEncoder = CreateNvidiaEncoder(RecordFPS, Data->cx, Data->cy, 8, L"veryfast", false, colorDesc, RecordBitRate, RecordBitRate, false);
+				videoEncoder = CreateNvidiaEncoder(RecordFPS, Data->cx, Data->cy, 8, L"veryfast", true, colorDesc, RecordBitRate, RecordBitRate, false, Data->colorType == DeviceOutputType_I420 ? 2 : 0);
 
 				if (!videoEncoder)
 				{
