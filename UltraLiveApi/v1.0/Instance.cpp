@@ -1126,7 +1126,25 @@ void CInstanceProcess::BulidX264Encoder()
 		{
 			if (LiveParam.LiveSetting.bUseHardEncoder)
 			{
-				videoEncoder = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX_back, outputCY_back, LiveParam.LiveSetting.Quality, Asic2WChar(LiveParam.LiveSetting.X264Preset).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRate, LiveParam.LiveSetting.VideoBitRate, false, 1);
+				if (IsSupportRecord(L"NVIDIA"))
+				{
+					videoEncoder = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX_back, outputCY_back, LiveParam.LiveSetting.Quality, Asic2WChar(LiveParam.LiveSetting.X264Preset).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRate, LiveParam.LiveSetting.VideoBitRate, false, 1);
+
+					if (videoEncoder)
+					{
+						Log::writeError(LOG_RTSPSERV, 1, "%s Use NVIDIA ÏÔ¿¨Ó²±à", __FUNCTION__);
+					}
+				}
+				else if (IsSupportRecord(L"Intel"))
+				{
+					videoEncoder = CreateRDX264EncoderNew(LiveParam.LiveSetting.FPS, outputCX_back, outputCY_back, LiveParam.LiveSetting.Quality, Asic2WChar(LiveParam.LiveSetting.X264Preset).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRate, LiveParam.LiveSetting.VideoBitRate, false, 1);
+
+					if (videoEncoder)
+					{
+						Log::writeError(LOG_RTSPSERV, 1, "%s Use Intel ÏÔ¿¨Ó²±à", __FUNCTION__);
+					}
+				}
+				
 			}
 			else
 			{
@@ -1138,7 +1156,24 @@ void CInstanceProcess::BulidX264Encoder()
 		{
 			if (LiveParam.LiveSetting.bUseHardEncoder)
 			{
-				videoEncoder = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX, outputCY, LiveParam.LiveSetting.Quality, Asic2WChar(LiveParam.LiveSetting.X264Preset).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRate, LiveParam.LiveSetting.VideoBitRate, false, 1);
+				if (IsSupportRecord(L"NVIDIA"))
+				{
+					videoEncoder = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX, outputCY, LiveParam.LiveSetting.Quality, Asic2WChar(LiveParam.LiveSetting.X264Preset).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRate, LiveParam.LiveSetting.VideoBitRate, false, 1);
+
+					if (videoEncoder)
+					{
+						Log::writeError(LOG_RTSPSERV, 1, "%s Use NVIDIA ÏÔ¿¨Ó²±à", __FUNCTION__);
+					}
+				}
+				else if (IsSupportRecord(L"Intel"))
+				{
+					videoEncoder = CreateRDX264EncoderNew(LiveParam.LiveSetting.FPS, outputCX, outputCY, LiveParam.LiveSetting.Quality, Asic2WChar(LiveParam.LiveSetting.X264Preset).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRate, LiveParam.LiveSetting.VideoBitRate, false, 1);
+					if (videoEncoder)
+					{
+						Log::writeError(LOG_RTSPSERV, 1, "%s Use Intel ÏÔ¿¨Ó²±à", __FUNCTION__);
+					}
+				}
+				
 			}
 			else
 			{
@@ -1150,7 +1185,25 @@ void CInstanceProcess::BulidX264Encoder()
 	{
 		if (LiveParam.LiveSetting.bUseHardEncoder)
 		{
-			videoEncoder = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX, outputCY, LiveParam.LiveSetting.Quality, Asic2WChar(LiveParam.LiveSetting.X264Preset).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRate, LiveParam.LiveSetting.VideoBitRate, false, 1);
+			if (IsSupportRecord(L"NVIDIA"))
+			{
+				videoEncoder = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX, outputCY, LiveParam.LiveSetting.Quality, Asic2WChar(LiveParam.LiveSetting.X264Preset).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRate, LiveParam.LiveSetting.VideoBitRate, false, 1);
+
+				if (videoEncoder)
+				{
+					Log::writeError(LOG_RTSPSERV, 1, "%s Use NVIDIA ÏÔ¿¨Ó²±à", __FUNCTION__);
+				}
+			}
+			else if (IsSupportRecord(L"Intel"))
+			{
+				videoEncoder = CreateRDX264EncoderNew(LiveParam.LiveSetting.FPS, outputCX, outputCY, LiveParam.LiveSetting.Quality, Asic2WChar(LiveParam.LiveSetting.X264Preset).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRate, LiveParam.LiveSetting.VideoBitRate, false, 1);
+
+				if (videoEncoder)
+				{
+					Log::writeError(LOG_RTSPSERV, 1, "%s Use Intel ÏÔ¿¨Ó²±à", __FUNCTION__);
+				}
+			}
+			
 		}
 		else
 		{
@@ -1175,7 +1228,25 @@ void CInstanceProcess::BulidX264Encoder()
 		{
 			if (LiveParam.LiveSetting.bUseHardEncoderSec)
 			{
-				videoEncoder_back = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX, outputCY, LiveParam.LiveSetting.QualitySec, Asic2WChar(LiveParam.LiveSetting.X264PresetSec).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRateSec, LiveParam.LiveSetting.VideoBitRateSec, true, 1);
+				if (IsSupportRecord(L"NVIDIA"))
+				{
+					videoEncoder_back = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX, outputCY, LiveParam.LiveSetting.QualitySec, Asic2WChar(LiveParam.LiveSetting.X264PresetSec).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRateSec, LiveParam.LiveSetting.VideoBitRateSec, true, 1);
+
+					if (videoEncoder_back)
+					{
+						Log::writeError(LOG_RTSPSERV, 1, "%s Use NVIDIA ÏÔ¿¨Ó²±à", __FUNCTION__);
+					}
+				}
+				else if (IsSupportRecord(L"Intel"))
+				{
+					videoEncoder_back = CreateRDX264EncoderNew(LiveParam.LiveSetting.FPS, outputCX, outputCY, LiveParam.LiveSetting.QualitySec, Asic2WChar(LiveParam.LiveSetting.X264PresetSec).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRateSec, LiveParam.LiveSetting.VideoBitRateSec, false, 1);
+
+					if (videoEncoder_back)
+					{
+						Log::writeError(LOG_RTSPSERV, 1, "%s Use Intel ÏÔ¿¨Ó²±à", __FUNCTION__);
+					}
+				}
+				
 			}
 			else
 			{
@@ -1186,7 +1257,25 @@ void CInstanceProcess::BulidX264Encoder()
 		{
 			if (LiveParam.LiveSetting.bUseHardEncoderSec)
 			{
-				videoEncoder_back = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX_back, outputCY_back, LiveParam.LiveSetting.QualitySec, Asic2WChar(LiveParam.LiveSetting.X264PresetSec).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRateSec, LiveParam.LiveSetting.VideoBitRateSec, true, 1);
+				if (IsSupportRecord(L"NVIDIA"))
+				{
+					videoEncoder_back = CreateNvidiaEncoder(LiveParam.LiveSetting.FPS, outputCX_back, outputCY_back, LiveParam.LiveSetting.QualitySec, Asic2WChar(LiveParam.LiveSetting.X264PresetSec).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRateSec, LiveParam.LiveSetting.VideoBitRateSec, true, 1);
+
+					if (videoEncoder_back)
+					{
+						Log::writeError(LOG_RTSPSERV, 1, "%s Use NVIDIA ÏÔ¿¨Ó²±à", __FUNCTION__);
+					}
+				}
+				else if (IsSupportRecord(L"Intel"))
+				{
+					videoEncoder_back = CreateRDX264EncoderNew(LiveParam.LiveSetting.FPS, outputCX_back, outputCY_back, LiveParam.LiveSetting.QualitySec, Asic2WChar(LiveParam.LiveSetting.X264PresetSec).c_str(), false, colorDesc, LiveParam.LiveSetting.VideoBitRateSec, LiveParam.LiveSetting.VideoBitRateSec, false, 1);
+
+					if (videoEncoder_back)
+					{
+						Log::writeError(LOG_RTSPSERV, 1, "%s Use Intel ÏÔ¿¨Ó²±à", __FUNCTION__);
+					}
+				}
+
 			}
 			else
 			{
@@ -2435,11 +2524,28 @@ void CInstanceProcess::ProcessRecord(CSampleData *Data)
 					fileStream.reset();
 
 				RecordFPS = 10000000.0 / (*Data->UserData)["frameInterval"].asUInt();
-				videoEncoder = CreateNvidiaEncoder(RecordFPS, Data->cx, Data->cy, 8, L"veryfast", true, colorDesc, RecordBitRate, RecordBitRate, false, Data->colorType == DeviceOutputType_I420 ? 2 : 0);
 
+				if (IsSupportRecord(L"NVIDIA"))
+				{
+					videoEncoder = CreateNvidiaEncoder(RecordFPS, Data->cx, Data->cy, 8, L"veryfast", true, colorDesc, RecordBitRate, RecordBitRate, false, Data->colorType == DeviceOutputType_I420 ? 2 : 0);
+
+					if (videoEncoder)
+					{
+						Log::writeError(LOG_RTSPSERV, 1, "%s Use NVIDIA ÏÔ¿¨Ó²±à", __FUNCTION__);
+					}
+				}
+				else if (IsSupportRecord(L"Intel"))
+				{
+					videoEncoder = CreateRDX264EncoderNew(RecordFPS, Data->cx, Data->cy, 8, L"veryfast", false, colorDesc, RecordBitRate, RecordBitRate, false, Data->colorType == DeviceOutputType_I420 ? 2 : 0);
+
+					if (videoEncoder)
+					{
+						Log::writeError(LOG_RTSPSERV, 1, "%s Use Intel ÏÔ¿¨Ó²±à", __FUNCTION__);
+					}
+				}
 				if (!videoEncoder)
 				{
-					Log::writeError(LOG_RTSPSERV, 1, "%s CreateNvidiaEncoder failed", __FUNCTION__);
+					Log::writeError(LOG_RTSPSERV, 1, "%s CreateNvidiaEncoder or CreateRDX264EncoderNew failed", __FUNCTION__);
 				}
 
 				String Path = GetOutputRecordFilename(RecordPath, Asic2WChar((*Data->UserData)["Name"].asString().c_str()).c_str(),Data->cx, Data->cy);

@@ -1208,26 +1208,7 @@ INT CALLBACK _BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM pDa
 	}
 	return 0;
 }
-bool IsSupportRecord()
-{
-	DeviceOutputs OutPuts;
-	GetDisplayDevices(OutPuts);
 
-	bool bSupport = false;
-	if (OutPuts.devices.Num() > 0)
-	{
-		for (int i = 0; i < OutPuts.devices.Num(); ++i)
-		{
-			if (sstri((const TCHAR*)OutPuts.devices[i].strDevice.Array(), (const TCHAR*)L"NVIDIA") != NULL)
-			{
-				bSupport = true;
-				break;
-			}
-		}
-	}
-
-	return bSupport;
-}
 
 INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -1559,7 +1540,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                 FillOutListOfDevices(hwndDeviceList, CLSID_VideoInputDeviceCategory, &configData->deviceNameList, &configData->deviceIDList);
 
 				bool bUseRecorder = configData->data["UseRecorder"].asInt() == 1;
-				bool bSupportRecord = IsSupportRecord();
+				bool bSupportRecord = IsSupportRecord(L"NVIDIA") || IsSupportRecord(L"Intel");
 
 				if (!bSupportRecord)
 				{

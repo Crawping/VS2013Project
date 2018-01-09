@@ -401,4 +401,5 @@ API_EXPORT void EnterLiveVideoSection();
 API_EXPORT void LeaveLiveVideoSection();
 API_EXPORT void ChangeLiveInstanceSameAsLocalInstance(IBaseVideo *Video);
 API_EXPORT D3DAPI *GetD3DRender();
+API_EXPORT bool IsSupportRecord(const TCHAR *DisplayName);
 #endif

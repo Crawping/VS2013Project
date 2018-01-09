@@ -1238,6 +1238,26 @@ D3DAPI *GetD3DRender()
 	return CSLiveManager::GetInstance()->GetD3DRender();
 }
 
+bool IsSupportRecord(const TCHAR *DisplayName)
+{
+	DeviceOutputs OutPuts;
+	GetDisplayDevices(OutPuts);
+
+	bool bSupport = false;
+	if (OutPuts.devices.Num() > 0)
+	{
+		for (int i = 0; i < OutPuts.devices.Num(); ++i)
+		{
+			if (sstri((const TCHAR*)OutPuts.devices[i].strDevice.Array(), DisplayName) != NULL)
+			{
+				bSupport = true;
+				break;
+			}
+		}
+	}
+	return bSupport;
+}
+
 LocaleStringLookup::LocaleStringLookup()
 {
 	top = new StringLookupNode;

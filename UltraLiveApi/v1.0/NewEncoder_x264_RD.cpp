@@ -119,7 +119,19 @@ volatile long g_RD264Init = 0;
 			vparam.width = width;
 			vparam.height = height;
 			vparam.fps = fps;
-			vparam.pix_format = ColorT == 0 ? RDCodec::PIXEL_FORMAT_I420 : RDCodec::PIXEL_FORMAT_NV12;//RDCodec::PIXEL_FORMAT_I420;
+			if (ColorT == 0)
+			{
+				vparam.pix_format = RDCodec::PIXEL_FORMAT_YV12;
+			}
+			else if (ColorT == 1)
+			{
+				vparam.pix_format = RDCodec::PIXEL_FORMAT_NV12;
+			}
+			else if (ColorT == 2)
+			{
+				vparam.pix_format = RDCodec::PIXEL_FORMAT_I420;
+			}
+
 			vparam.isSkip = false;
 			vparam.type = RDCodec::VIDEO_CODEC_TYPE_H264_HARD;
 			vparam.rcmode = RDCodec::RC_MODE_CBR;
