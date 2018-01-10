@@ -490,7 +490,6 @@ void DSource::ReceiveMediaSample(IMediaSample *sample, bool bAudio)
 	if (SUCCEEDED(sample->GetPointer(&pointer)))
 	{
 		CSampleData *data = NULL;
-		long nlen1 = sample->GetActualDataLength();
 
 		OSEnterMutex(hSampleMutex);
 

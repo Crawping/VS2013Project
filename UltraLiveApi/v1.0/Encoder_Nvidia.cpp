@@ -59,6 +59,24 @@ static int getNALLen(char *data, int datalen)
 #define DEFAULT_I_QOFFSET 0.f
 #define DEFAULT_B_QOFFSET 1.25f
 
+static int GetNvidiaAdpterID()
+{
+	DeviceOutputs OutPuts;
+	GetDisplayDevices(OutPuts);
+
+	if (OutPuts.devices.Num() > 0)
+	{
+		for (int i = 0; i < OutPuts.devices.Num(); ++i)
+		{
+			if (sstri((const TCHAR*)OutPuts.devices[i].strDevice.Array(), L"NVIDIA") != NULL)
+			{
+				return i;
+			}
+		}
+	}
+	return -1;
+}
+
 class CNvidiaEncoder : public VideoEncoder
 {
 protected:	
@@ -161,7 +179,7 @@ public:
 	
 		m_encodeConfig.pictureStruct = 1;
 		m_encodeConfig.deviceType = 1;
-		m_encodeConfig.deviceID = CSLiveManager::GetInstance()->BSParam.DeviceSetting.AdpterID;
+		m_encodeConfig.deviceID = GetNvidiaAdpterID();
 
 		m_encodeConfig.fps = fps;
 		m_encodeConfig.width = width;

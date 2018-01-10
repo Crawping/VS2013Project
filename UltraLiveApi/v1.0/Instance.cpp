@@ -2921,6 +2921,9 @@ void CInstanceProcess::VideoEncoderLoop()
 		pendingAudioFrames[i].audioData.Clear();
 	pendingAudioFrames.Clear();
 
+	if(picIn)
+		delete picIn;
+
 #if SAVE_YUV_TEST
 	fclose(fyuv);
 #endif
