@@ -1220,12 +1220,14 @@ void* GetNickNameCallBack()
 
 void EnterLiveVideoSection()
 {
-	EnterCriticalSection(&CSLiveManager::GetInstance()->LiveInstance->AudioSection);
+	if (CSLiveManager::GetInstance()->LiveInstance)
+		EnterCriticalSection(&CSLiveManager::GetInstance()->LiveInstance->AudioSection);
 }
 
 void LeaveLiveVideoSection()
 {
-	LeaveCriticalSection(&CSLiveManager::GetInstance()->LiveInstance->AudioSection);
+	if(CSLiveManager::GetInstance()->LiveInstance)
+		LeaveCriticalSection(&CSLiveManager::GetInstance()->LiveInstance->AudioSection);
 }
 
 void ChangeLiveInstanceSameAsLocalInstance(IBaseVideo *Video)
